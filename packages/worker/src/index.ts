@@ -1,3 +1,5 @@
+export { UserStateDO } from './state_do'
+
 export default {
 	async fetch(_request, _env, _ctx) {
 		return new Response('AYUP')

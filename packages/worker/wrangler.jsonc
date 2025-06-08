@@ -2,7 +2,21 @@
 	"name": "rizz-chat-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-06-08",
-	"workers_dev": false /*,
+	"workers_dev": false,
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "USER_STATE_DO",
+				"class_name": "UserStateDO"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["UserStateDO"]
+		}
+	] /*,
 	"env": {
 		"staging": {
 			"name": "my-worker-staging",
