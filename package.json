@@ -10,7 +10,8 @@
 		"packages/*"
 	],
 	"scripts": {
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"style": "prettier -c ."
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.9",

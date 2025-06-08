@@ -4,3 +4,10 @@ pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
+
+# Generated Files
+packages/*/.svelte-kit/**
+packages/*/.wrangler/**
+packages/*/build/**
+packages/*/worker-configuration.d.ts
+packages/worker/**/migrations.js

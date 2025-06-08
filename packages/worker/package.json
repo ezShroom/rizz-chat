@@ -5,7 +5,9 @@
 	"private": true,
 	"scripts": {
 		"dev": "wrangler dev",
-		"types": "wrangler types"
+		"build": "wrangler build",
+		"types": "wrangler types",
+		"check": "tsc"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
