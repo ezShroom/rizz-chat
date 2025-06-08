@@ -6,4 +6,8 @@ export class UserStateDO extends DurableObject<Env> {
 
 		console.log('we have Constructed very hard')
 	}
+
+	public hello() {
+		return 'May I object? :)'
+	}
 }
