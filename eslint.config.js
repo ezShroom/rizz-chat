@@ -44,11 +44,9 @@ export default ts.config(
 					caughtErrorsIgnorePattern: '^_'
 				}
 			]
-		},
-		ignores: [
-			'packages/worker/.wrangler/**',
-			'packages/worker/worker-configuration.d.ts',
-			'packages/sveltekit/.svelte-kit/**'
-		]
+		}
+	},
+	{
+		ignores: ['**/.wrangler/', '**/worker-configuration.d.ts', '**/.svelte-kit/']
 	}
 )
