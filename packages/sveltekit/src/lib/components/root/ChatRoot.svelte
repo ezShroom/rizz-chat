@@ -2,7 +2,7 @@
 	import Navigation from './chat/Navigation.svelte'
 </script>
 
-<div class="flex">
+<div class="flex h-screen">
 	<Navigation />
-	<main class="grow">main</main>
+	<main class="grow bg-stone-950">main</main>
 </div>
