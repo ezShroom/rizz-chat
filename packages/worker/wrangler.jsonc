@@ -1,0 +1,21 @@
+{
+	"name": "rizz-chat-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-06-08",
+	"workers_dev": false /*,
+	"env": {
+		"staging": {
+			"name": "my-worker-staging",
+			"route": {
+				"pattern": "staging.example.org/*",
+				"zone_name": "example.org"
+			},
+			"kv_namespaces": [
+				{
+					"binding": "<MY_NAMESPACE>",
+					"id": "<STAGING_KV_ID>"
+				}
+			]
+		}
+	}*/
+}

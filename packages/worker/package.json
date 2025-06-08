@@ -1,12 +1,13 @@
 {
-  "name": "worker",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "worker",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "wrangler dev",
+		"types": "wrangler types"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
 }

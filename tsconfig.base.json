@@ -6,7 +6,6 @@
 		"module": "Preserve",
 		"moduleDetection": "force",
 		"jsx": "react-jsx",
-		"types": ["./worker-configuration.d.ts"],
 		"allowJs": true,
 
 		// Bundler mode
@@ -27,5 +26,5 @@
 		"noUnusedParameters": true,
 		"noPropertyAccessFromIndexSignature": true
 	},
-	"include": ["src/**/*.ts"]
+	"include": ["packages/**/*.ts", "packages/**/*.svelte"]
 }
