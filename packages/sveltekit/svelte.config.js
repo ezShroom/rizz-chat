@@ -2,8 +2,14 @@ import adapter from '@sveltejs/adapter-cloudflare'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 
 const config = {
-	preprocess: vitePreprocess(),
-	kit: { adapter: adapter() }
+	preprocess: vitePreprocess({ script: true }),
+	kit: {
+		adapter: adapter(),
+		alias: {
+			'@battlecards/shared/*': '../shared/*',
+			'@battlecards/shared': '../shared'
+		}
+	}
 }
 
 export default config
