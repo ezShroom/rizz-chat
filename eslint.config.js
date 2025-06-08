@@ -35,6 +35,16 @@ export default ts.config(
 		}
 	},
 	{
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					caughtErrorsIgnorePattern: '^_'
+				}
+			]
+		},
 		ignores: [
 			'packages/worker/.wrangler/**',
 			'packages/worker/worker-configuration.d.ts',

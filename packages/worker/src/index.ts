@@ -1,5 +1,5 @@
 export default {
-	async fetch(request, env, ctx) {
+	async fetch(_request, _env, _ctx) {
 		return new Response('AYUP')
 	}
 } satisfies ExportedHandler<Env>
