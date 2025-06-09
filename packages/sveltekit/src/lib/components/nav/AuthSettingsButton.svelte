@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { Person } from 'svelte-bootstrap-icons'
 	import { authClient } from '$lib/auth-client'
 	import clsx from 'clsx'
