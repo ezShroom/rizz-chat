@@ -8,8 +8,8 @@ import {
 	DISCORD_CLIENT_SECRET
 } from '$env/static/private'
 import { PUBLIC_DISCORD_APP_ID } from '$env/static/public'
-import { getAuthServer } from '@battlecards/shared/src/auth_server'
-import { getDB } from '@battlecards/shared/src/db/auth'
+import { getAuthServer } from 'shared/src/auth_server'
+import { getDB } from 'shared/src/db/auth'
 
 export const auth = getAuthServer(
 	getDB({ DATABASE_URL, DATABASE_AUTH_TOKEN }),

@@ -4,11 +4,7 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 const config = {
 	preprocess: vitePreprocess({ script: true }),
 	kit: {
-		adapter: adapter(),
-		alias: {
-			'@battlecards/shared/*': '../shared/*',
-			'@battlecards/shared': '../shared'
-		}
+		adapter: adapter()
 	}
 }
 
