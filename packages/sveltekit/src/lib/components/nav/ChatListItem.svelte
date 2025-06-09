@@ -17,10 +17,10 @@
 		!selected && 'border-transparent'
 	)}
 	{onclick}
-	><div class="grow">
+	><div class="grow truncate">
 		<!--<div class="absolute right-0 z-10 size-4 h-full bg-gradient-to-r from-black/0 to-black"></div>-->
 		{@render children?.()}
 	</div>
-	<Pencil class="my-auto" />
-	<Trash class="my-auto" />
+	<Pencil class="my-auto flex-none" />
+	<Trash class="my-auto flex-none" />
 </button>
