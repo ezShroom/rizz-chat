@@ -3,10 +3,10 @@
 	import ChatListItem from '$lib/components/nav/ChatListItem.svelte'
 </script>
 
-<nav class="flex w-64 flex-col gap-2 border-r border-r-stone-900 bg-black p-4 text-white">
+<nav class="flex w-64 flex-col gap-2 border-r border-r-stone-900 bg-black p-4 pr-0 text-white">
 	<h1 class="text-3xl">rizz chat</h1>
 	<div
-		class="scrollbar-thin scrollbar-thumb-black scrollbar-hover:scrollbar-thumb-stone-600 scrollbar-track-black scrollbar-thumb-rounded-full min-h-0 grow overflow-y-auto transition-all"
+		class="scrollbar-thin scrollbar-thumb-black scrollbar-hover:scrollbar-thumb-stone-600 scrollbar-track-black scrollbar-thumb-rounded-full min-h-0 grow overflow-y-auto pr-4 transition-all"
 		style="overflow-anchor: none"
 	>
 		<ChatListItem selected={true}>name</ChatListItem>
