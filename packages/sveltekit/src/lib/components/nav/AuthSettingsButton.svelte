@@ -7,7 +7,7 @@
 
 <button
 	class={clsx(
-		'flex w-full cursor-pointer justify-center gap-2 rounded-xl border p-2 transition-all hover:scale-95',
+		'mr-4 flex w-[100%-1rem] cursor-pointer justify-center gap-2 rounded-xl border p-2 transition-all hover:scale-95',
 		!$session.data && 'border-amber-800 bg-amber-950 hover:border-amber-700 hover:bg-amber-900',
 		$session.data && 'flex border-stone-800 bg-stone-950'
 	)}
