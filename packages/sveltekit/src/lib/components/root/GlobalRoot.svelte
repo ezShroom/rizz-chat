@@ -9,12 +9,17 @@
 	import { UpstreamWsMessageAction } from 'shared/src/types/ws/upstream/UpstreamWsMessageAction'
 	import { version } from '../../../../package.json'
 	import { DownstreamWsMessageAction } from 'shared/src/types/ws/downstream/DownstreamWsMessageAction'
+	import { CloseReason } from 'shared/src/types/ws/CloseReason'
 
 	let missedPings = 0
 	let pingInterval: ReturnType<typeof setTimeout>
-
 	let ws: WebSocket
+
+	// TODO: exponentially back this off
+	let reconnections = $state(0)
 	$effect(() => {
+		console.log('Creating connection', reconnections)
+
 		ws = new WebSocket('ws://localhost:8787/session')
 		ws.onmessage = (event) => {
 			if (event.data === '!') return (missedPings = 0) // ? response is !
@@ -50,8 +55,27 @@
 			}, 2500)
 			missedPings = 1
 		}
-		ws.onerror = console.error // TODO: better error handler
-		ws.onclose = console.error // TODO: better close handler
+		ws.onerror = () => reconnections++
+		ws.onclose = (event) => {
+			switch (event.code) {
+				case CloseReason.SchemaNotSatisfied:
+					// TODO: Tell the user that the app is doing something odd
+					return
+				default:
+					// Give this socket another go!
+					reconnections++
+			}
+		}
+
+		return () => {
+			try {
+				ws.onmessage = () => {}
+				ws.onopen = () => {}
+				ws.onerror = () => {}
+				ws.onclose = () => {}
+				ws.close(CloseReason.PingsMissed)
+			} catch {}
+		}
 	})
 </script>
 

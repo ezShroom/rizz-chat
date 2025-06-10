@@ -7,6 +7,7 @@ import {
 import { type DownstreamWsMessage } from 'shared/src/types/ws/downstream/DownstreamWsMessage'
 import { UpstreamWsMessageAction } from 'shared/src/types/ws/upstream/UpstreamWsMessageAction'
 import { DownstreamWsMessageAction } from 'shared/src/types/ws/downstream/DownstreamWsMessageAction'
+import { CloseReason } from 'shared/src/types/ws/CloseReason'
 
 export class UserStateDO extends DurableObject<Env> {
 	constructor(ctx: DurableObjectState, env: Env) {
@@ -45,7 +46,7 @@ export class UserStateDO extends DurableObject<Env> {
 			decoded = potentialUpstream
 		} catch (e) {
 			console.error(e)
-			ws.close(4000)
+			ws.close(CloseReason.SchemaNotSatisfied)
 			return
 		}
 		switch (decoded.action) {
