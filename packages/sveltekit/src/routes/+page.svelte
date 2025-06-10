@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ChatRoot from '$lib/components/root/ChatRoot.svelte'
+	import GlobalRoot from '$lib/components/root/GlobalRoot.svelte'
 </script>
 
-<ChatRoot />
+<GlobalRoot />
