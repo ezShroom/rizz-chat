@@ -4,6 +4,9 @@
 	let ws
 	$effect(() => {
 		ws = new WebSocket('ws://localhost:8787/session')
+		ws.onmessage = (event) => {
+			console.log(event.data)
+		}
 	})
 </script>
 

@@ -17,6 +17,7 @@
 	"devDependencies": {
 		"@eslint/compat": "^1.2.9",
 		"@eslint/js": "^9.28.0",
+		"@types/semver": "^7.7.0",
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-svelte": "^3.9.1",
 		"globals": "^16.2.0",
@@ -32,9 +33,11 @@
 		"ai": "^4.3.16",
 		"better-auth": "^1.2.8",
 		"clsx": "^2.1.1",
+		"semver": "^7.7.2",
+		"superjson": "^2.2.2",
 		"svelte-bootstrap-icons": "^3.3.0",
 		"tailwind-scrollbar": "^4.0.2",
 		"uuidv7": "^1.0.2",
-		"zod": "^3.25.56"
+		"zod": "^3.25.57"
 	}
 }
