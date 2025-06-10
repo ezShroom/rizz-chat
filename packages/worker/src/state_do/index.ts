@@ -21,6 +21,13 @@ export class UserStateDO extends DurableObject<Env> {
 		})
 	}
 
+	public override async webSocketMessage(
+		_ws: WebSocket,
+		message: string | ArrayBuffer
+	): Promise<void> {
+		console.log(message)
+	}
+
 	public hello() {
 		return 'May I object? :)'
 	}
