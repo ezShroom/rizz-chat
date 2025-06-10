@@ -17,6 +17,8 @@
 	$effect(() => {
 		ws = new WebSocket('ws://localhost:8787/session')
 		ws.onmessage = (event) => {
+			if (event.data === '!') return (missedPings = 0) // ? response is !
+
 			let decoded: DownstreamWsMessage
 			try {
 				const potentialDownstream = SuperJSON.parse(event.data)
@@ -28,9 +30,6 @@
 			}
 
 			switch (decoded.action) {
-				case DownstreamWsMessageAction.Pong:
-					missedPings = 0
-					return
 				case DownstreamWsMessageAction.RequireRefresh:
 					window.location.reload()
 					return
@@ -46,12 +45,7 @@
 				} satisfies UpstreamWsMessage)
 			)
 			pingInterval = setInterval(() => {
-				if (ws.readyState === ws.OPEN && pingInterval)
-					ws.send(
-						SuperJSON.stringify({
-							action: UpstreamWsMessageAction.Ping
-						} satisfies UpstreamWsMessage)
-					)
+				if (ws.readyState === ws.OPEN && pingInterval) ws.send('?')
 				missedPings++
 			}, 2500)
 			missedPings = 1

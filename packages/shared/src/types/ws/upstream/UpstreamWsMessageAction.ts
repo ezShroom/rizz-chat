@@ -1,4 +1,3 @@
 export enum UpstreamWsMessageAction {
-	Hello,
-	Ping
+	Hello
 }

@@ -7,9 +7,6 @@ export const DownstreamWsMessageSchema = z.discriminatedUnion('action', [
 	}),
 	z.object({
 		action: z.literal(DownstreamWsMessageAction.NoChangesToReport)
-	}),
-	z.object({
-		action: z.literal(DownstreamWsMessageAction.Pong)
 	})
 ])
 export type DownstreamWsMessage = z.infer<typeof DownstreamWsMessageSchema>

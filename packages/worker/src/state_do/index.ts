@@ -12,6 +12,9 @@ export class UserStateDO extends DurableObject<Env> {
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env)
 
+		if (!ctx.getWebSocketAutoResponse())
+			ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('?', '!'))
+
 		console.log('we have Constructed very hard')
 	}
 
@@ -46,9 +49,16 @@ export class UserStateDO extends DurableObject<Env> {
 			return
 		}
 		switch (decoded.action) {
-			case UpstreamWsMessageAction.Ping:
+			/*case UpstreamWsMessageAction.Ping:
 				ws.send(
 					SuperJSON.stringify({ action: DownstreamWsMessageAction.Pong } as DownstreamWsMessage)
+				)
+				return*/
+			case UpstreamWsMessageAction.Hello:
+				ws.send(
+					SuperJSON.stringify({
+						action: DownstreamWsMessageAction.NoChangesToReport
+					} as DownstreamWsMessage)
 				)
 				return
 			default:
