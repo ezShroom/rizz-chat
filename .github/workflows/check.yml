@@ -51,6 +51,14 @@ jobs:
 
       - name: Check
         run: bun --filter "sveltekit" check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          PUBLIC_DISCORD_APP_ID: ${{ secrets.PUBLIC_DISCORD_APP_ID }}
 
   Check-Worker:
     runs-on: ubuntu-latest
@@ -99,6 +107,14 @@ jobs:
 
       - name: Build
         run: bun --filter "sveltekit" build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          PUBLIC_DISCORD_APP_ID: ${{ secrets.PUBLIC_DISCORD_APP_ID }}
 
   Build-Worker:
     runs-on: ubuntu-latest
