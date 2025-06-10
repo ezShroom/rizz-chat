@@ -7,7 +7,9 @@ export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 		action: z.literal(UpstreamWsMessageAction.Hello),
 		version: z.string().refine(semver.valid)
 	}),
-	z.object()
+	z.object({
+		action: z.literal(UpstreamWsMessageAction.Ping)
+	})
 ])
 export type UpstreamWsMessage = z.infer<typeof UpstreamWsMessageSchema>
 export const isUpstreamWsMessage = (obj: unknown): obj is UpstreamWsMessage =>

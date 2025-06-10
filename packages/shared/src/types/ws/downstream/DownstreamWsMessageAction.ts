@@ -1,3 +1,5 @@
 export enum DownstreamWsMessageAction {
-    RequireRefresh
+	RequireRefresh,
+	NoChangesToReport,
+	Pong
 }
