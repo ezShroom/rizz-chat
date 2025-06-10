@@ -78,6 +78,9 @@
     },
     "packages/worker": {
       "name": "worker",
+      "dependencies": {
+        "shared": "workspace:*",
+      },
       "peerDependencies": {
         "typescript": "^5",
       },
