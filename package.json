@@ -12,9 +12,9 @@
 	"scripts": {
 		"lint": "eslint .",
 		"style": "prettier -c .",
-		"build": "bun --bun turbo build",
-		"check": "bun --bun turbo check",
-		"dev": "bun --bun turbo dev db",
+		"build": "bun turbo build",
+		"check": "bun turbo check",
+		"dev": "bun turbo dev db",
 		"migrate": "bun drizzle-kit migrate"
 	},
 	"devDependencies": {
