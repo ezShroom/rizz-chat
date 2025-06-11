@@ -13,6 +13,6 @@
 			</div>
 			<div class="p-4">Rizz Chat is the best!</div>
 		</div>
-		<ChatBar />
+		<ChatBar onSubmit={console.log} />
 	</main>
 </div>
