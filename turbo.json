@@ -25,14 +25,14 @@
 			"outputs": ["dist/**", ".svelte-kit/**", ".wrangler/**"]
 		},
 		"check": {
-			"dependsOn": ["^check"]
+			"dependsOn": ["shared#build", "^check"]
 		},
 		"style": {
 			"dependsOn": ["^style"]
 		},
 		"fix_style": {},
 		"lint": {
-			"dependsOn": ["^lint"]
+			"dependsOn": ["shared#build", "^lint"]
 		},
 		"db": { "persistent": true, "cache": false },
 		"dev": { "dependsOn": ["shared#build"], "persistent": true, "cache": false }
