@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 import { UpstreamWsMessageAction } from './UpstreamWsMessageAction'
 import semver from 'semver'
-import { ReasoningLevel } from '../../ReasoningLevel'
+import { SomeTransferableMessageSchema } from '../../SomeTransferableMessage'
 
 export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 	z.object({
@@ -10,12 +10,8 @@ export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 	}),
 	z.object({
 		action: z.literal(UpstreamWsMessageAction.Submit),
-		thread: z.uuidv7(),
-		attachments: z.array(z.url()).optional(),
-		body: z.string().max(10_000),
-		model: z.uuidv7(),
-		reasoningLevel: z.enum(ReasoningLevel),
-		search: z.boolean()
+		message: SomeTransferableMessageSchema,
+		respondTo: z.uuidv4()
 	})
 ])
 export type UpstreamWsMessage = z.infer<typeof UpstreamWsMessageSchema>

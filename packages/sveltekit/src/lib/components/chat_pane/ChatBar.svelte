@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { MAX_MESSAGE_LENGTH, ReasoningLevel, type TransferableMessage } from 'shared'
+	import { MAX_MESSAGE_LENGTH, ReasoningLevel, type BaseTransferableMessage } from 'shared'
 	import { ArrowUp } from 'svelte-bootstrap-icons'
 
 	let textareaElement: HTMLTextAreaElement
 	let value = $state('')
 
-	const { onSubmit }: { onSubmit?: (message: TransferableMessage) => unknown } = $props()
+	const { onSubmit }: { onSubmit?: (message: BaseTransferableMessage) => unknown } = $props()
 
 	function handleInput() {
 		// reset height to its minimum to correctly calculate the new scrollHeight
@@ -30,11 +30,11 @@
 		onSubmit?.({
 			thread: '0197601d-574b-7a61-ae1f-badf0a4af1b2',
 			body: value,
-            modelConfig: {
-                model: '0197601d-574b-7bfb-87df-cd91c27ca542',
-                reasoningLevel: ReasoningLevel.Off,
-                search: false
-            }
+			modelConfig: {
+				model: '0197601d-574b-7bfb-87df-cd91c27ca542',
+				reasoningLevel: ReasoningLevel.Off,
+				search: false
+			}
 		})
 		value = ''
 		requestAnimationFrame(handleInput)

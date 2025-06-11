@@ -1,7 +1,10 @@
-<script>
-	import { ArrowUp } from 'svelte-bootstrap-icons'
+<script lang="ts">
 	import Navigation from './chat/Navigation.svelte'
 	import ChatBar from '../chat_pane/ChatBar.svelte'
+	import { UpstreamWsMessageAction, type ReliableUpstreamWsMessage } from 'shared'
+
+	const { sendReliably }: { sendReliably: (message: ReliableUpstreamWsMessage) => unknown } =
+		$props()
 </script>
 
 <div class="flex h-screen">
@@ -13,6 +16,13 @@
 			</div>
 			<div class="p-4">Rizz Chat is the best!</div>
 		</div>
-		<ChatBar onSubmit={console.log} />
+		<ChatBar
+			onSubmit={(message) =>
+				sendReliably({
+					action: UpstreamWsMessageAction.Submit,
+					message,
+					respondTo: crypto.randomUUID()
+				})}
+		/>
 	</main>
 </div>

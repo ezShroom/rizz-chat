@@ -1,7 +1,11 @@
 <script lang="ts">
 	import SuperJSON from 'superjson'
 	import ChatRoot from './ChatRoot.svelte'
-	import { isDownstreamWsMessage, type DownstreamWsMessage } from 'shared'
+	import {
+		isDownstreamWsMessage,
+		type DownstreamWsMessage,
+		type ReliableUpstreamWsMessage
+	} from 'shared'
 	import {
 		type UpstreamWsMessage,
 		UpstreamWsMessageAction,
@@ -51,8 +55,12 @@
 			pingInterval = setInterval(() => {
 				if (ws.readyState === ws.OPEN && pingInterval) ws.send('?')
 				missedPings++
+				console.debug('Sent ping - missed', missedPings)
 			}, 2500)
-			missedPings = 1
+			missedPings = 0
+			for (const message of messageQueue) {
+				ws.send(SuperJSON.stringify(message))
+			}
 		}
 		ws.onerror = () => reconnections++
 		ws.onclose = (event) => {
@@ -76,6 +84,12 @@
 			} catch {}
 		}
 	})
+
+	let messageQueue: ReliableUpstreamWsMessage[] = []
+	function sendReliably(message: ReliableUpstreamWsMessage) {
+		messageQueue.push(message)
+		if (ws.readyState === ws.OPEN) ws.send(SuperJSON.stringify(message))
+	}
 </script>
 
-<ChatRoot />
+<ChatRoot {sendReliably} />
