@@ -62,6 +62,9 @@ export class UserStateDO extends DurableObject<Env> {
 					} as DownstreamWsMessage)
 				)
 				return
+			case UpstreamWsMessageAction.Submit:
+				console.log(decoded.body)
+				return
 			default:
 			// assertNever()
 		}

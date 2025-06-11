@@ -1,5 +1,7 @@
 <script>
+	import { ArrowUp } from 'svelte-bootstrap-icons'
 	import Navigation from './chat/Navigation.svelte'
+	import ChatBar from '../chat_pane/ChatBar.svelte'
 </script>
 
 <div class="flex h-screen">
@@ -11,9 +13,6 @@
 			</div>
 			<div class="p-4">Rizz Chat is the best!</div>
 		</div>
-		<input
-			class="appearance-none !border-none bg-stone-900 p-4 !outline-none placeholder:text-stone-400"
-			placeholder="Chat with Gemini 2.5 Flash"
-		/>
+		<ChatBar />
 	</main>
 </div>
