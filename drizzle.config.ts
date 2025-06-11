@@ -5,5 +5,6 @@ export default defineConfig({
 	dbCredentials: {
 		url: 'http://localhost:8080'
 	},
-	out: './packages/shared/src/db/auth/drizle'
+	out: './packages/shared/src/db/auth/drizzle',
+	schema: './packages/shared/src/db/auth/schema.ts'
 })

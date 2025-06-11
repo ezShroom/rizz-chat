@@ -15,7 +15,8 @@
 		"build": "bun turbo build",
 		"check": "bun turbo check",
 		"dev": "bun turbo dev db",
-		"migrate": "bun drizzle-kit migrate"
+		"migrate": "bun drizzle-kit migrate",
+		"generate": "bun drizzle-kit generate"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.9",
