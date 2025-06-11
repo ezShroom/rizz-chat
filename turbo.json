@@ -1,5 +1,24 @@
 {
 	"$schema": "https://turborepo.com/schema.json",
+	"globalEnv": [
+		"DATABASE_URL",
+		"DATABASE_AUTH_TOKEN",
+		"BETTER_AUTH_SECRET",
+		"BETTER_AUTH_URL",
+		"COOKIE_DOMAIN",
+		"DISCORD_CLIENT_SECRET",
+		"PUBLIC_DISCORD_APP_ID"
+	],
+	"globalPassThroughEnv": [
+		"DATABASE_URL",
+		"DATABASE_AUTH_TOKEN",
+		"BETTER_AUTH_SECRET",
+		"BETTER_AUTH_URL",
+		"COOKIE_DOMAIN",
+		"DISCORD_CLIENT_SECRET",
+		"PUBLIC_DISCORD_APP_ID",
+		"GROQ_KEY"
+	],
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
@@ -11,10 +30,11 @@
 		"style": {
 			"dependsOn": ["^style"]
 		},
+		"fix_style": {},
 		"lint": {
 			"dependsOn": ["^lint"]
 		},
-		"db": { "dependsOn": ["build"], "persistent": true, "cache": false },
-		"dev": { "persistent": true, "cache": false }
+		"db": { "persistent": true, "cache": false },
+		"dev": { "dependsOn": ["shared#build"], "persistent": true, "cache": false }
 	}
 }

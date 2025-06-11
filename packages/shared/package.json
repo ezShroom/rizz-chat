@@ -9,8 +9,11 @@
 	"types": "./dist/index.d.ts",
 	"scripts": {
 		"build": "tsc",
+		"lint": "eslint .",
+		"style": "prettier -c .",
 		"check": "tsc --noEmit",
-		"dev": "tsc -b --watch --preserveWatchOutput"
+		"dev": "tsc -b --watch --preserveWatchOutput",
+		"fix_style": "prettier -w ."
 	},
 	"peerDependencies": {
 		"typescript": "^5"
