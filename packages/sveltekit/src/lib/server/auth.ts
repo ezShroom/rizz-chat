@@ -8,8 +8,7 @@ import {
 	DISCORD_CLIENT_SECRET
 } from '$env/static/private'
 import { PUBLIC_DISCORD_APP_ID } from '$env/static/public'
-import { getAuthServer } from 'shared/src/auth_server'
-import { getDB } from 'shared/src/db/auth'
+import { getAuthServer, getDB } from 'shared'
 
 export const auth = getAuthServer(
 	getDB({ DATABASE_URL, DATABASE_AUTH_TOKEN }),

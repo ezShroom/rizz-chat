@@ -12,11 +12,15 @@
 	"scripts": {
 		"lint": "eslint .",
 		"style": "prettier -c .",
-		"db": "turso dev --db-file ./dev_db/dev.db"
+		"build": "bun --bun turbo build",
+		"check": "bun --bun turbo check",
+		"dev": "bun --bun turbo dev db",
+		"migrate": "bun drizzle-kit migrate"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.9",
 		"@eslint/js": "^9.28.0",
+		"@types/bun": "^1.2.15",
 		"@types/semver": "^7.7.0",
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-svelte": "^3.9.1",
@@ -24,6 +28,7 @@
 		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.4.0",
 		"prettier-plugin-tailwindcss": "^0.6.12",
+		"turbo": "^2.5.4",
 		"typescript-eslint": "^8.33.1",
 		"wrangler": "^4.19.1"
 	},
@@ -40,5 +45,6 @@
 		"uuidv7": "^1.0.2",
 		"zod": "^3.25.57",
 		"shared": "workspace:*"
-	}
+	},
+	"packageManager": "bun@1.2.15"
 }

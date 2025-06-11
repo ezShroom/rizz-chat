@@ -1,15 +1,14 @@
 <script lang="ts">
 	import SuperJSON from 'superjson'
 	import ChatRoot from './ChatRoot.svelte'
+	import { isDownstreamWsMessage, type DownstreamWsMessage } from 'shared'
 	import {
-		isDownstreamWsMessage,
-		type DownstreamWsMessage
-	} from 'shared/src/types/ws/downstream/DownstreamWsMessage'
-	import { type UpstreamWsMessage } from 'shared/src/types/ws/upstream/UpstreamWsMessage'
-	import { UpstreamWsMessageAction } from 'shared/src/types/ws/upstream/UpstreamWsMessageAction'
+		type UpstreamWsMessage,
+		UpstreamWsMessageAction,
+		DownstreamWsMessageAction,
+		CloseReason
+	} from 'shared'
 	import { version } from '../../../../package.json'
-	import { DownstreamWsMessageAction } from 'shared/src/types/ws/downstream/DownstreamWsMessageAction'
-	import { CloseReason } from 'shared/src/types/ws/CloseReason'
 
 	let missedPings = 0
 	let pingInterval: ReturnType<typeof setTimeout>

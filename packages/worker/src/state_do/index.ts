@@ -2,12 +2,12 @@ import { DurableObject } from 'cloudflare:workers'
 import SuperJSON from 'superjson'
 import {
 	isUpstreamWsMessage,
-	type UpstreamWsMessage
-} from 'shared/src/types/ws/upstream/UpstreamWsMessage'
-import { type DownstreamWsMessage } from 'shared/src/types/ws/downstream/DownstreamWsMessage'
-import { UpstreamWsMessageAction } from 'shared/src/types/ws/upstream/UpstreamWsMessageAction'
-import { DownstreamWsMessageAction } from 'shared/src/types/ws/downstream/DownstreamWsMessageAction'
-import { CloseReason } from 'shared/src/types/ws/CloseReason'
+	type UpstreamWsMessage,
+	type DownstreamWsMessage,
+	UpstreamWsMessageAction,
+	DownstreamWsMessageAction,
+	CloseReason
+} from 'shared'
 
 export class UserStateDO extends DurableObject<Env> {
 	constructor(ctx: DurableObjectState, env: Env) {

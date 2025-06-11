@@ -1,0 +1,20 @@
+{
+	"$schema": "https://turborepo.com/schema.json",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**", ".svelte-kit/**", ".wrangler/**"]
+		},
+		"check": {
+			"dependsOn": ["^check"]
+		},
+		"style": {
+			"dependsOn": ["^style"]
+		},
+		"lint": {
+			"dependsOn": ["^lint"]
+		},
+		"db": { "persistent": true, "cache": false },
+		"dev": { "persistent": true, "cache": false }
+	}
+}
