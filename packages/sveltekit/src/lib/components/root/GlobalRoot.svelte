@@ -29,6 +29,7 @@
 		threads: [],
 		messages: []
 	})
+	let message = $state('') // TODO: fix this. this is shit
 
 	// TODO: exponentially back this off
 	let reconnections = $state(0)
@@ -68,8 +69,9 @@
 					}
 					return
 				case DownstreamWsMessageAction.NewMessageToken:
-				// this requires some context knowledge, don't push to memory right now
-
+					// this requires some context knowledge, don't push to memory right now
+					message += decoded.content
+					return
 				default:
 					console.log('Message did not match a handling case:', decoded)
 			}
@@ -123,4 +125,4 @@
 	}
 </script>
 
-<ChatRoot {sendReliably} {memoryCache} />
+<ChatRoot {sendReliably} {memoryCache} {message} />

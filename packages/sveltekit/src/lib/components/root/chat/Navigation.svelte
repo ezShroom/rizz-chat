@@ -5,7 +5,7 @@
 
 	const { threadCache }: { threadCache: LocalCacheThread[] } = $props()
 	const sortedCache = $derived(
-		threadCache.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime())
+		[...threadCache].sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime())
 	)
 </script>
 

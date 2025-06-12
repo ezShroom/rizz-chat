@@ -6,9 +6,13 @@
 
 	const {
 		sendReliably,
-		memoryCache
-	}: { sendReliably: (message: ReliableUpstreamWsMessage) => unknown; memoryCache: MemoryCache } =
-		$props()
+		memoryCache,
+		message
+	}: {
+		sendReliably: (message: ReliableUpstreamWsMessage) => unknown
+		memoryCache: MemoryCache
+		message: string
+	} = $props()
 </script>
 
 <div class="flex h-screen">
@@ -19,6 +23,7 @@
 				<div class="max-w-128 rounded-xl rounded-br-none bg-stone-900 p-4">What is Rizz Chat?</div>
 			</div>
 			<div class="p-4">Rizz Chat is the best!</div>
+			<div class="p-4">{message}</div>
 		</div>
 		<ChatBar
 			onSubmit={(message) =>
