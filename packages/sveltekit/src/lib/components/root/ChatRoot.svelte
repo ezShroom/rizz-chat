@@ -2,13 +2,17 @@
 	import Navigation from './chat/Navigation.svelte'
 	import ChatBar from '../chat_pane/ChatBar.svelte'
 	import { UpstreamWsMessageAction, type ReliableUpstreamWsMessage } from 'shared'
+	import type { MemoryCache } from '$lib/types/cache/MemoryCache'
 
-	const { sendReliably }: { sendReliably: (message: ReliableUpstreamWsMessage) => unknown } =
+	const {
+		sendReliably,
+		memoryCache
+	}: { sendReliably: (message: ReliableUpstreamWsMessage) => unknown; memoryCache: MemoryCache } =
 		$props()
 </script>
 
 <div class="flex h-screen">
-	<Navigation />
+	<Navigation threadCache={memoryCache.threads} />
 	<main class="flex grow flex-col bg-stone-950 text-white">
 		<div class="mx-auto size-full max-w-256 grow p-4">
 			<div class="flex w-full justify-end">

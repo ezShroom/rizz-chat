@@ -58,9 +58,10 @@
 		rows="1"
 		maxlength={MAX_MESSAGE_LENGTH}
 	></textarea>
-	<div
+	<button
 		class="ml-2 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-t from-red-800 to-red-700 transition-all hover:scale-90 hover:from-red-900 hover:to-red-800"
+		onclick={doSubmission}
 	>
 		<ArrowUp class="size-5" />
-	</div>
+	</button>
 </div>

@@ -12,8 +12,14 @@ import {
 } from 'shared'
 import { createGroq } from '@ai-sdk/groq'
 import { streamText, type CoreMessage, type StreamTextResult, type ToolSet } from 'ai'
+import { uuidv7 } from 'uuidv7'
 
 export class UserStateDO extends DurableObject<Env> {
+	private ongoingMessages: Record<
+		string,
+		{ threadId: string; started: Date; billFor: boolean; tokens: Record<number, string> }
+	> = {}
+
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env)
 
@@ -73,6 +79,28 @@ export class UserStateDO extends DurableObject<Env> {
 				)
 					return ws.close(CloseReason.BadModelConfig)
 
+				const messageId = uuidv7()
+				const messageDate = new Date()
+				this.ongoingMessages[messageId] = {
+					threadId: uuidv7(),
+					started: messageDate,
+					billFor: false,
+					tokens: {}
+				}
+				this.ctx.getWebSockets().forEach((ws) =>
+					ws.send(
+						SuperJSON.stringify({
+							action: DownstreamWsMessageAction.MessageSent,
+							responseTo: decoded.respondTo,
+							id: messageId,
+							newThreadDetails: {
+								id: uuidv7(),
+								createdAt: messageDate
+							}
+						} satisfies DownstreamWsMessage)
+					)
+				)
+
 				switch (modelDetails.provider) {
 					case ModelProviders.Groq: {
 						const groq = createGroq({ apiKey: this.env.GROQ_KEY })
@@ -88,7 +116,7 @@ export class UserStateDO extends DurableObject<Env> {
 							model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
 							messages
 						})
-						this.processTextStream(result.fullStream)
+						this.processTextStream(result.fullStream, messageId)
 					}
 				}
 				return
@@ -98,11 +126,27 @@ export class UserStateDO extends DurableObject<Env> {
 		}
 	}
 
-	private async processTextStream(stream: StreamTextResult<ToolSet, never>['fullStream']) {
+	private async processTextStream(
+		stream: StreamTextResult<ToolSet, never>['fullStream'],
+		messageId: string
+	) {
+		let existingTokens = 0
 		for await (const part of stream) {
+			if (!this.ongoingMessages[messageId]) return
 			switch (part.type) {
 				case 'text-delta':
-					this.ctx.getWebSockets().forEach((ws) => ws.send(part.textDelta))
+					this.ongoingMessages[messageId].tokens[existingTokens] = part.textDelta
+					existingTokens++
+					this.ctx.getWebSockets().forEach((ws) => {
+						ws.send(
+							SuperJSON.stringify({
+								action: DownstreamWsMessageAction.NewMessageToken,
+								messageId: uuidv7(),
+								content: part.textDelta,
+								position: 1
+							} satisfies DownstreamWsMessage)
+						)
+					})
 					break
 				default:
 					console.log(part)

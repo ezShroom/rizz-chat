@@ -13,10 +13,22 @@
 		CloseReason
 	} from 'shared'
 	import { version } from '../../../../package.json'
+	import type { MemoryCache } from '$lib/types/cache/MemoryCache'
 
 	let missedPings = 0
-	let pingInterval: ReturnType<typeof setTimeout>
+	let pingInterval: ReturnType<typeof setInterval>
 	let ws: WebSocket
+
+	function clearSocket() {
+		ws.onmessage = () => {}
+		ws.onopen = () => {}
+		ws.onerror = () => {}
+		ws.onclose = () => {}
+	}
+	const memoryCache: MemoryCache = $state({
+		threads: [],
+		messages: []
+	})
 
 	// TODO: exponentially back this off
 	let reconnections = $state(0)
@@ -32,6 +44,7 @@
 				const potentialDownstream = SuperJSON.parse(event.data)
 				if (!isDownstreamWsMessage(potentialDownstream))
 					return console.error('Invalid message received!\n', event.data)
+				if ('responseTo' in potentialDownstream) delete messageQueue[potentialDownstream.responseTo]
 				decoded = potentialDownstream
 			} catch {
 				return console.error('Error while parsing message!\n', event.data)
@@ -41,6 +54,22 @@
 				case DownstreamWsMessageAction.RequireRefresh:
 					window.location.reload()
 					return
+				case DownstreamWsMessageAction.NoChangesToReport:
+					// yay
+					return
+				case DownstreamWsMessageAction.MessageSent:
+					if (decoded.newThreadDetails) {
+						console.log('aa')
+						memoryCache.threads.push({
+							title: '',
+							id: decoded.newThreadDetails.id,
+							lastModified: decoded.newThreadDetails.createdAt
+						})
+					}
+					return
+				case DownstreamWsMessageAction.NewMessageToken:
+				// this requires some context knowledge, don't push to memory right now
+
 				default:
 					console.log('Message did not match a handling case:', decoded)
 			}
@@ -58,14 +87,19 @@
 				console.debug('Sent ping - missed', missedPings)
 			}, 2500)
 			missedPings = 0
-			for (const message of messageQueue) {
+			for (const message of Object.values(messageQueue)) {
 				ws.send(SuperJSON.stringify(message))
 			}
 		}
-		ws.onerror = () => reconnections++
+		ws.onerror = () => {
+			clearInterval(pingInterval)
+			reconnections++
+		}
 		ws.onclose = (event) => {
+			clearInterval(pingInterval)
 			switch (event.code) {
 				case CloseReason.SchemaNotSatisfied:
+				case CloseReason.BadModelConfig:
 					// TODO: Tell the user that the app is doing something odd
 					return
 				default:
@@ -76,20 +110,17 @@
 
 		return () => {
 			try {
-				ws.onmessage = () => {}
-				ws.onopen = () => {}
-				ws.onerror = () => {}
-				ws.onclose = () => {}
+				clearSocket()
 				ws.close(CloseReason.PingsMissed)
 			} catch {}
 		}
 	})
 
-	let messageQueue: ReliableUpstreamWsMessage[] = []
+	let messageQueue: Record<string, ReliableUpstreamWsMessage> = {}
 	function sendReliably(message: ReliableUpstreamWsMessage) {
-		messageQueue.push(message)
+		messageQueue[message.respondTo] = message
 		if (ws.readyState === ws.OPEN) ws.send(SuperJSON.stringify(message))
 	}
 </script>
 
-<ChatRoot {sendReliably} />
+<ChatRoot {sendReliably} {memoryCache} />
