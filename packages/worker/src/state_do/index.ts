@@ -103,6 +103,9 @@ export class UserStateDO extends DurableObject<Env> {
 			switch (part.type) {
 				case 'text-delta':
 					this.ctx.getWebSockets().forEach((ws) => ws.send(part.textDelta))
+					break
+				default:
+					console.log(part)
 			}
 		}
 	}
