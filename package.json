@@ -17,6 +17,7 @@
 		"dev": "bun turbo dev db",
 		"dev_win": "bun turbo dev",
 		"db": "bun turbo db",
+		"types": "bun turbo types",
 		"migrate": "bun drizzle-kit migrate",
 		"generate": "bun drizzle-kit generate"
 	},

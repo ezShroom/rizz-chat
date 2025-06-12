@@ -31,6 +31,7 @@
 			"dependsOn": ["^style"]
 		},
 		"fix_style": {},
+		"types": {},
 		"lint": {
 			"dependsOn": ["shared#build", "^lint"]
 		},
