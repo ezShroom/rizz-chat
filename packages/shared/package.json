@@ -1,13 +1,19 @@
 {
 	"name": "shared",
-	"module": "index.ts",
 	"type": "module",
 	"private": true,
 	"devDependencies": {
 		"@types/bun": "latest"
 	},
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"scripts": {
-		"check": "tsc"
+		"build": "tsc",
+		"lint": "eslint .",
+		"style": "prettier -c .",
+		"check": "tsc --noEmit",
+		"dev": "tsc -b --watch --preserveWatchOutput",
+		"fix_style": "prettier -w ."
 	},
 	"peerDependencies": {
 		"typescript": "^5"

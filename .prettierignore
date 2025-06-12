@@ -11,4 +11,3 @@ packages/*/.wrangler/**
 packages/*/build/**
 packages/*/worker-configuration.d.ts
 packages/worker/**/migrations.js
-drizzle/**/*

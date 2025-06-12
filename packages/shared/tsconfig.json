@@ -10,9 +10,12 @@
 
 		// Bundler mode
 		"moduleResolution": "bundler",
-		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
-		"noEmit": true,
+
+		// Build setup
+		"composite": true,
+		"outDir": "dist",
+		"rootDir": "src",
 
 		// Best practices
 		"strict": true,
@@ -26,5 +29,5 @@
 		"noUnusedParameters": true,
 		"noPropertyAccessFromIndexSignature": true
 	},
-	"include": ["./src/**/*.ts"]
+	"include": ["**/*.ts"]
 }

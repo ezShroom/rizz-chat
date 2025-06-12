@@ -7,9 +7,15 @@
 		"dev": "wrangler dev",
 		"build": "wrangler build",
 		"types": "wrangler types",
-		"check": "tsc"
+		"check": "tsc",
+		"lint": "eslint .",
+		"style": "prettier -c .",
+		"fix_style": "prettier -w ."
 	},
 	"peerDependencies": {
 		"typescript": "^5"
+	},
+	"dependencies": {
+		"shared": "workspace:*"
 	}
 }
