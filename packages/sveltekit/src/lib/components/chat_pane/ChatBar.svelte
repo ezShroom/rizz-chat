@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { MAX_MESSAGE_LENGTH, ReasoningLevel, type BaseTransferableMessage } from 'shared'
+	import {
+		globalConfig,
+		MAX_MESSAGE_LENGTH,
+		ReasoningLevel,
+		type BaseTransferableMessage
+	} from 'shared'
 	import { ArrowUp } from 'svelte-bootstrap-icons'
 
 	let textareaElement: HTMLTextAreaElement
@@ -42,7 +47,7 @@
 </script>
 
 <div class="flex items-end gap-0 bg-stone-900 p-2">
-	<div class="p-2">Gemini 2.0 Flash</div>
+	<div class="p-2">{Object.values(globalConfig.models)[0].name}</div>
 	<textarea
 		bind:this={textareaElement}
 		bind:value

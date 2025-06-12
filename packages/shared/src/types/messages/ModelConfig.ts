@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { ReasoningLevel } from './ReasoningLevel'
+import { ReasoningLevel } from '../ReasoningLevel'
 
 export const ModelConfigSchema = z.object({
 	model: z.uuidv7(),

@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import { ModelConfigSchema } from './ModelConfig'
-import { MAX_MESSAGE_LENGTH } from '../constants'
+import { MAX_MESSAGE_LENGTH } from '../../constants'
 
 export const BaseTransferableMessageSchema = z.object({
 	thread: z.uuidv7(),

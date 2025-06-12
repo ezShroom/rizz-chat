@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 import { UpstreamWsMessageAction } from './UpstreamWsMessageAction'
 import semver from 'semver'
-import { SomeTransferableMessageSchema } from '../../SomeTransferableMessage'
+import { SomeTransferableMessageSchema } from '../../messages/SomeTransferableMessage'
 
 export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 	z.object({
