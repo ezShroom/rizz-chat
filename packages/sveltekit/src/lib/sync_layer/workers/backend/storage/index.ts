@@ -5,6 +5,7 @@ import SQLiteESMFactory from 'wa-sqlite/dist/wa-sqlite.mjs'
 // @ts-expect-error wa-sqlite has no type definitions
 import * as SQLite from 'wa-sqlite/src/sqlite-api.js'
 import wasmUrl from 'wa-sqlite/dist/wa-sqlite.wasm?url'
+import { drizzle } from 'drizzle-orm/sqlite-proxy'
 
 // I've written comments about my ugly code before. This is probably the MOST ugly it's going to get
 // The good news is there isn't much of a need to touch it
@@ -71,4 +72,31 @@ export async function getOPFSDatabase() {
 	console.log(
 		`Using ${pageSize * pageCount}B (${quota}B available - ${(pageSize * pageCount) / quota}% used)`
 	)
+
+	return drizzle(async (sql, params, method) => {
+		try {
+			const rows: string[][] = []
+
+			// 1. use the async generator to get the statement handle.
+			// this loop will only run once for a single drizzle query.
+			for await (const stmt of sqlite3.statements(db, sql)) {
+				// 2. use the bind_collection helper you found earlier.
+				if (params.length > 0) {
+					sqlite3.bind_collection(stmt, params)
+				}
+
+				// 3. step through the results of this single statement.
+				while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
+					// 4. get the row data. `sqlite3.row` gets the current row as an array.
+					const row = sqlite3.row(stmt)
+					rows.push(row.map((value: unknown) => String(value)))
+				}
+			}
+
+			return { rows }
+		} catch (e) {
+			console.error('query failed:', e, 'sql:', sql, 'params:', params)
+			throw e
+		}
+	})
 }
