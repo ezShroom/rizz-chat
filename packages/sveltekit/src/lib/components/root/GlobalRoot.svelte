@@ -14,6 +14,7 @@
 	} from 'shared'
 	import { version } from '../../../../package.json'
 	import type { MemoryCache } from '$lib/types/cache/MemoryCache'
+	import { syncLayer } from '$lib/sync_layer'
 
 	let missedPings = 0
 	let pingInterval: ReturnType<typeof setInterval>
