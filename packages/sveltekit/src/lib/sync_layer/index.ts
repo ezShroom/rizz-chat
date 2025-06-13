@@ -5,7 +5,7 @@ class SyncLayer {
 			// android chrome backup option
 			return
 		}
-		const worker = new Worker(new URL('./workers/shared.ts', import.meta.url))
+		const worker = new Worker(new URL('./workers/shared.ts', import.meta.url), { type: 'module' })
 	}
 }
 export const syncLayer = new SyncLayer()
