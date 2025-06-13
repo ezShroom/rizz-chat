@@ -49,19 +49,26 @@ export async function getOPFSDatabase() {
 	const db = await sqlite3.open_v2('test') // NOTE TO SELF: THIS IS A POINTER
 
 	// Get page size and count to know where we're at
-	let pageSize
+	let pageSize: number | undefined
 	if (
 		(await sqlite3.exec(db, `PRAGMA page_size;`, (row: number[]) => {
 			pageSize = row[0]
 		})) !== SQLite.SQLITE_OK
 	)
 		throw new Error('Could not get page size')
-
-	let pageCount
+	let pageCount: number | undefined
 	if (
 		await sqlite3.exec(db, `PRAGMA page_count;`, (row: number[]) => {
 			pageCount = row[0]
 		})
 	)
 		throw new Error('Could not get page count')
+	if (typeof pageSize === 'undefined' || typeof pageCount === 'undefined')
+		throw new Error('SQLite is not reporting storage')
+
+	const { quota } = await navigator.storage.estimate()
+	if (!quota) throw new Error('Browser is not reporting storage quota')
+	console.log(
+		`Using ${pageSize * pageCount}B (${quota}B available - ${(pageSize * pageCount) / quota}% used)`
+	)
 }
