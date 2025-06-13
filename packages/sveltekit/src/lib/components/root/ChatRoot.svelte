@@ -3,6 +3,7 @@
 	import ChatBar from '../chat_pane/ChatBar.svelte'
 	import { UpstreamWsMessageAction, type ReliableUpstreamWsMessage } from 'shared'
 	import type { MemoryCache } from '$lib/types/cache/MemoryCache'
+	import ChatPane from './chat/ChatPane.svelte'
 
 	const {
 		sendReliably,
@@ -15,23 +16,7 @@
 	} = $props()
 </script>
 
-<div class="flex h-screen">
+<div class="flex h-screen overflow-hidden">
 	<Navigation threadCache={memoryCache.threads} />
-	<main class="flex grow flex-col bg-stone-950 text-white">
-		<div class="mx-auto size-full max-w-256 grow p-4">
-			<div class="flex w-full justify-end">
-				<div class="max-w-128 rounded-xl rounded-br-none bg-stone-900 p-4">What is Rizz Chat?</div>
-			</div>
-			<div class="p-4">Rizz Chat is the best!</div>
-			<div class="p-4">{message}</div>
-		</div>
-		<ChatBar
-			onSubmit={(message) =>
-				sendReliably({
-					action: UpstreamWsMessageAction.Submit,
-					message,
-					respondTo: crypto.randomUUID()
-				})}
-		/>
-	</main>
+	<ChatPane {sendReliably} {message} />
 </div>
