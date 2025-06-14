@@ -15,6 +15,13 @@
       "when": 1749888662896,
       "tag": "0001_square_radioactive_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1749896513908,
+      "tag": "0002_gigantic_black_cat",
+      "breakpoints": true
     }
   ]
 }

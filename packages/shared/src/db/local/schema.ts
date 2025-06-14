@@ -18,7 +18,7 @@ export const message = sqliteTable(
 	'message',
 	{
 		id: text().primaryKey(),
-		threadId: text().references(() => thread.id),
+		threadId: text().references(() => thread.id, { onDelete: 'cascade' }),
 		createdAt: integer({ mode: 'timestamp_ms' }),
 		body: text({ length: MAX_MESSAGE_LENGTH }),
 		model: text(),
@@ -34,7 +34,7 @@ export const message = sqliteTable(
 )
 export const attachment = sqliteTable('attachment', {
 	id: text().primaryKey(),
-	messageId: text().references(() => message.id),
+	messageId: text().references(() => message.id, { onDelete: 'cascade' }),
 	generalType: integer(),
 	url: text()
 })

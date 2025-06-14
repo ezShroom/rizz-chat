@@ -7,6 +7,55 @@ import * as SQLite from 'wa-sqlite/src/sqlite-api.js'
 import wasmUrl from 'wa-sqlite/dist/wa-sqlite.wasm?url'
 import { drizzle } from 'drizzle-orm/sqlite-proxy'
 
+async function basicDrizzleQuery(
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	sqlite3: any,
+	dbPointer: number,
+	sql: string,
+	params: unknown[],
+	method: 'all' | 'run' | 'get' | 'values'
+): Promise<{ rows: string[] | string[][] }> {
+	console.debug(sql, params, method)
+
+	const rows: string[][] = []
+	let error: Error | null = null
+
+	try {
+		for await (const stmt of sqlite3.statements(dbPointer, sql)) {
+			if (params.length > 0) {
+				sqlite3.bind_collection(stmt, params)
+			}
+
+			for (
+				let rowResult = await sqlite3.step(stmt);
+				rowResult !== SQLite.SQLITE_DONE;
+				rowResult = await sqlite3.step(stmt)
+			) {
+				if (rowResult !== SQLite.SQLITE_ROW) {
+					error = new Error(`Expected ${SQLite.SQLITE_ROW} response (at step), got ${rowResult}`)
+					break // Don't throw, just break
+				}
+
+				const row = sqlite3.row(stmt)
+				rows.push(row.map((value: unknown) => String(value)))
+				if (method === 'get') break
+			}
+
+			if (error) break // Exit after cleanup
+		}
+	} catch (e) {
+		error = e as Error
+	}
+
+	// Now throw after SQLite is done
+	if (error) {
+		console.error('query failed:', error, 'sql:', sql, 'params:', params)
+		throw error
+	}
+
+	return method === 'get' ? { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] } : { rows }
+}
+
 // I've written comments about my ugly code before. This is probably the MOST ugly it's going to get
 // The good news is there isn't much of a need to touch it
 // Main reason for this mess is that wa-sqlite is a purely JS project
@@ -47,7 +96,7 @@ export async function getOPFSDatabase() {
 	sqlite3.vfs_register(vfs, true)
 
 	// Open the database.
-	const db = await sqlite3.open_v2('test') // NOTE TO SELF: THIS IS A POINTER
+	const db = await sqlite3.open_v2('local.db') // NOTE TO SELF: THIS IS A POINTER
 
 	// Get page size and count to know where we're at
 	let pageSize: number | undefined
@@ -59,9 +108,9 @@ export async function getOPFSDatabase() {
 		throw new Error('Could not get page size')
 	let pageCount: number | undefined
 	if (
-		await sqlite3.exec(db, `PRAGMA page_count;`, (row: number[]) => {
+		(await sqlite3.exec(db, `PRAGMA page_count;`, (row: number[]) => {
 			pageCount = row[0]
-		})
+		})) !== SQLite.SQLITE_OK
 	)
 		throw new Error('Could not get page count')
 	if (typeof pageSize === 'undefined' || typeof pageCount === 'undefined')
@@ -70,44 +119,38 @@ export async function getOPFSDatabase() {
 	const { quota } = await navigator.storage.estimate()
 	if (!quota) throw new Error('Browser is not reporting storage quota')
 	console.log(
-		`Using ${pageSize * pageCount}B (${quota}B available - ${(pageSize * pageCount) / quota}% used)`
+		`Using ${pageSize * pageCount}B (${quota}B available - ${Math.floor((pageSize * pageCount) / quota)}% used)`
 	)
 
 	// TODO: Actually use this data to limit size. We won't for the cloneathon
 
-	return drizzle(async (sql, params, method) => {
-		console.debug(sql, params, method)
+	return {
+		drizzle: drizzle(
+			(sql, params, method) => basicDrizzleQuery(sqlite3, db, sql, params, method),
+			async (queries) => {
+				if ((await sqlite3.exec(db, `BEGIN TRANSACTION;`, () => {})) !== SQLite.SQLITE_OK)
+					throw new Error('Could not begin transaction for batch!')
 
-		try {
-			const rows: string[][] = []
-
-			// 1. use the async generator to get the statement handle.
-			// this loop will only run once for a single drizzle query.
-			for await (const stmt of sqlite3.statements(db, sql)) {
-				// 2. use the bind_collection helper you found earlier.
-				if (params.length > 0) {
-					sqlite3.bind_collection(stmt, params)
+				const queryResults: { rows: string[] | string[][] }[] = []
+				try {
+					for (const query of queries) {
+						queryResults.push(
+							await basicDrizzleQuery(sqlite3, db, query.sql, query.params, query.method)
+						)
+					}
+				} catch (e) {
+					if ((await sqlite3.exec(db, `ROLLBACK;`, () => {})) !== SQLite.SQLITE_OK)
+						throw new Error('Tried to run transaction, failed, and could not rollback')
+					throw e
 				}
 
-				// 3. step through the results of this single statement.
-				while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
-					// 4. get the row data. `sqlite3.row` gets the current row as an array.
-					const row = sqlite3.row(stmt)
-					rows.push(row.map((value: unknown) => String(value)))
-					if (method === 'get') break // get only demands one
-				}
+				// After all queries succeed
+				if ((await sqlite3.exec(db, `COMMIT;`, () => {})) !== SQLite.SQLITE_OK)
+					throw new Error('Could not commit transaction')
 
-				sqlite3.finalize(stmt)
+				return queryResults
 			}
-
-			console.debug(rows)
-			console.debug(
-				method === 'get' ? { rows } : { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] }
-			)
-			return method === 'get' ? { rows } : { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] }
-		} catch (e) {
-			console.error('query failed:', e, 'sql:', sql, 'params:', params)
-			throw e
-		}
-	})
+		),
+		raw: { sqlite3, db }
+	}
 }
