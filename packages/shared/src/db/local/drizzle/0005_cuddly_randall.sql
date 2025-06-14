@@ -1,0 +1,1 @@
+ALTER TABLE `message` ADD `htmlBody` text NOT NULL;

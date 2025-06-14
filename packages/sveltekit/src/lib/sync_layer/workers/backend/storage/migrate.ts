@@ -3,7 +3,7 @@ import type { BatchItem } from 'drizzle-orm/batch'
 import type { SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
 
 export async function migrate(
-	db: SqliteRemoteDatabase<Record<string, never>>,
+	db: SqliteRemoteDatabase<Record<string, unknown>>,
 	localMigrations: {
 		journal: {
 			version: string

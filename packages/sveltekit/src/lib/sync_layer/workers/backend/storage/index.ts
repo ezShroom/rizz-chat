@@ -5,7 +5,8 @@ import SQLiteESMFactory from 'wa-sqlite/dist/wa-sqlite.mjs'
 // @ts-expect-error wa-sqlite has no type definitions
 import * as SQLite from 'wa-sqlite/src/sqlite-api.js'
 import wasmUrl from 'wa-sqlite/dist/wa-sqlite.wasm?url'
-import { drizzle } from 'drizzle-orm/sqlite-proxy'
+import { drizzle, SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
+import { localSchema } from 'shared'
 
 // I've written comments about my ugly code before. This is probably the MOST ugly it's going to get
 // The good news is there isn't much of a need to touch it
@@ -63,7 +64,10 @@ async function basicDrizzleQuery(
 	return result
 }
 
-export async function getOPFSDatabase() {
+export async function getOPFSDatabase(): Promise<{
+	drizzle: SqliteRemoteDatabase<typeof localSchema>
+	raw: { sqlite3: unknown; db: number }
+}> {
 	// 1. fetch the wasm binary
 	let wasmBinary
 	while (true) {

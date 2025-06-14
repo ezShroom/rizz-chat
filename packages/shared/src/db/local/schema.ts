@@ -23,6 +23,8 @@ export const message = sqliteTable(
 			.notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' }).notNull(),
 		body: text({ length: MAX_MESSAGE_LENGTH }).notNull(),
+		htmlBody: text().notNull(),
+		sender: integer().notNull(),
 		model: text().notNull(),
 		reasoningLevel: integer().notNull(),
 		search: integer({ mode: 'boolean' }).notNull()
