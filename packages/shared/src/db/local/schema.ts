@@ -6,8 +6,8 @@ export const thread = sqliteTable(
 	'thread',
 	{
 		id: text().primaryKey(),
-		title: text(),
-		lastKnownModification: integer({ mode: 'timestamp_ms' })
+		title: text().notNull(),
+		lastKnownModification: integer({ mode: 'timestamp_ms' }).notNull()
 	},
 	(table) => [
 		index('thread_lastKnownModification_idx').on(table.lastKnownModification),
@@ -18,12 +18,14 @@ export const message = sqliteTable(
 	'message',
 	{
 		id: text().primaryKey(),
-		threadId: text().references(() => thread.id, { onDelete: 'cascade' }),
-		createdAt: integer({ mode: 'timestamp_ms' }),
-		body: text({ length: MAX_MESSAGE_LENGTH }),
-		model: text(),
-		reasoningLevel: integer(),
-		search: integer({ mode: 'boolean' })
+		threadId: text()
+			.references(() => thread.id, { onDelete: 'cascade' })
+			.notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		body: text({ length: MAX_MESSAGE_LENGTH }).notNull(),
+		model: text().notNull(),
+		reasoningLevel: integer().notNull(),
+		search: integer({ mode: 'boolean' }).notNull()
 	},
 	(table) => [
 		index('message_body+createdAt_idx').on(table.body, table.createdAt),
@@ -34,9 +36,11 @@ export const message = sqliteTable(
 )
 export const attachment = sqliteTable('attachment', {
 	id: text().primaryKey(),
-	messageId: text().references(() => message.id, { onDelete: 'cascade' }),
-	generalType: integer(),
-	url: text()
+	messageId: text()
+		.references(() => message.id, { onDelete: 'cascade' })
+		.notNull(),
+	generalType: integer().notNull(),
+	url: text().notNull()
 })
 
 export const threadRelations = relations(thread, ({ many }) => ({

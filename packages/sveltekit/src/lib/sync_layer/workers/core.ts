@@ -1,9 +1,22 @@
 import { getOPFSDatabase } from './backend/storage'
-import { localMigrations } from 'shared'
+import { localMigrations, localSchema } from 'shared'
 import { migrate } from './backend/storage/migrate'
+import { eq } from 'drizzle-orm'
 
-const { drizzle } = await getOPFSDatabase()
-await migrate(drizzle, localMigrations)
+const { drizzle: db } = await getOPFSDatabase()
+await migrate(db, localMigrations)
 console.log('yay migrated!')
 
-// Before running migrations, test if the database is still valid
+const id = crypto.randomUUID()
+
+await db
+	.insert(localSchema.thread)
+	.values({
+		id,
+		title: 'abcdefgh',
+		lastKnownModification: new Date()
+	})
+	.run()
+const result = await db.select().from(localSchema.thread).where(eq(localSchema.thread.id, id)).get()
+console.log(result)
+console.log(result?.lastKnownModification.toDateString())

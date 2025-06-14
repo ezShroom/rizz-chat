@@ -7,6 +7,10 @@ import * as SQLite from 'wa-sqlite/src/sqlite-api.js'
 import wasmUrl from 'wa-sqlite/dist/wa-sqlite.wasm?url'
 import { drizzle } from 'drizzle-orm/sqlite-proxy'
 
+// I've written comments about my ugly code before. This is probably the MOST ugly it's going to get
+// The good news is there isn't much of a need to touch it
+// Main reason for this mess is that wa-sqlite is a purely JS project
+
 async function basicDrizzleQuery(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	sqlite3: any,
@@ -14,10 +18,10 @@ async function basicDrizzleQuery(
 	sql: string,
 	params: unknown[],
 	method: 'all' | 'run' | 'get' | 'values'
-): Promise<{ rows: string[] | string[][] }> {
+): Promise<{ rows: unknown[] | unknown[][] }> {
 	console.debug(sql, params, method)
 
-	const rows: string[][] = []
+	const rows: unknown[][] = []
 	let error: Error | null = null
 
 	try {
@@ -37,7 +41,7 @@ async function basicDrizzleQuery(
 				}
 
 				const row = sqlite3.row(stmt)
-				rows.push(row.map((value: unknown) => String(value)))
+				rows.push(row)
 				if (method === 'get') break
 			}
 
@@ -53,12 +57,12 @@ async function basicDrizzleQuery(
 		throw error
 	}
 
-	return method === 'get' ? { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] } : { rows }
+	const result =
+		method === 'get' ? { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] } : { rows }
+	console.debug(result)
+	return result
 }
 
-// I've written comments about my ugly code before. This is probably the MOST ugly it's going to get
-// The good news is there isn't much of a need to touch it
-// Main reason for this mess is that wa-sqlite is a purely JS project
 export async function getOPFSDatabase() {
 	// 1. fetch the wasm binary
 	let wasmBinary
@@ -131,7 +135,7 @@ export async function getOPFSDatabase() {
 				if ((await sqlite3.exec(db, `BEGIN TRANSACTION;`, () => {})) !== SQLite.SQLITE_OK)
 					throw new Error('Could not begin transaction for batch!')
 
-				const queryResults: { rows: string[] | string[][] }[] = []
+				const queryResults: { rows: unknown[] | unknown[][] }[] = []
 				try {
 					for (const query of queries) {
 						queryResults.push(
