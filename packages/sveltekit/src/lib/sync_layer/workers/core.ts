@@ -19,20 +19,20 @@ export class SyncLayer {
 		this.init()
 	}
 }
+;(async () => {
+	const { drizzle: db } = await getOPFSDatabase()
+	await migrate(db, localMigrations)
+	console.log('yay migrated!')
 
-const { drizzle: db } = await getOPFSDatabase()
-await migrate(db, localMigrations)
-console.log('yay migrated!')
+	const threads = await db
+		.select()
+		.from(localSchema.thread)
+		.orderBy(desc(localSchema.thread.lastKnownModification))
+		.execute()
 
-const threads = await db
-	.select()
-	.from(localSchema.thread)
-	.orderBy(desc(localSchema.thread.lastKnownModification))
-	.execute()
+	console.log(threads)
 
-console.log(threads)
-
-/*async function insertDefaultContent() {
+	/*async function insertDefaultContent() {
 	const [firstThreadId, secondThreadId] = uuidv7()
 	console.log(firstThreadId, secondThreadId)
 	await db
@@ -70,6 +70,7 @@ console.log(threads)
 		])
 		.run()
 }*/
-if (!threads) {
-	// This is where we WOULD insert dummy data assuming the server has nothing for us
-}
+	if (!threads) {
+		// This is where we WOULD insert dummy data assuming the server has nothing for us
+	}
+})()
