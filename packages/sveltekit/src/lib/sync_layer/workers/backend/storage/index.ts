@@ -73,7 +73,11 @@ export async function getOPFSDatabase() {
 		`Using ${pageSize * pageCount}B (${quota}B available - ${(pageSize * pageCount) / quota}% used)`
 	)
 
+	// TODO: Actually use this data to limit size. We won't for the cloneathon
+
 	return drizzle(async (sql, params, method) => {
+		console.debug(sql, params, method)
+
 		try {
 			const rows: string[][] = []
 
@@ -90,10 +94,17 @@ export async function getOPFSDatabase() {
 					// 4. get the row data. `sqlite3.row` gets the current row as an array.
 					const row = sqlite3.row(stmt)
 					rows.push(row.map((value: unknown) => String(value)))
+					if (method === 'get') break // get only demands one
 				}
+
+				sqlite3.finalize(stmt)
 			}
 
-			return { rows }
+			console.debug(rows)
+			console.debug(
+				method === 'get' ? { rows } : { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] }
+			)
+			return method === 'get' ? { rows } : { rows: typeof rows[0] !== 'undefined' ? rows[0] : [] }
 		} catch (e) {
 			console.error('query failed:', e, 'sql:', sql, 'params:', params)
 			throw e

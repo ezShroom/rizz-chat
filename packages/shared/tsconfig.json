@@ -29,5 +29,5 @@
 		"noUnusedParameters": true,
 		"noPropertyAccessFromIndexSignature": true
 	},
-	"include": ["**/*.ts"]
+	"include": ["src/**/*.ts", "**/drizzle/*", "**/drizzle/meta/_journal.json"]
 }

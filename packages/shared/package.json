@@ -8,11 +8,11 @@
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "tsc",
+		"build": "tsdown",
 		"lint": "eslint .",
 		"style": "prettier -c .",
 		"check": "tsc --noEmit",
-		"dev": "tsc -b --watch --preserveWatchOutput",
+		"dev": "tsdown --watch --no-clean",
 		"fix_style": "prettier -w ."
 	},
 	"peerDependencies": {
