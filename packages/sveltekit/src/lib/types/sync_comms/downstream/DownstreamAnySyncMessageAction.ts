@@ -1,4 +1,5 @@
 export enum DownstreamAnySyncMessageAction {
 	LocalDatabaseError,
-	UpdateLocalView
+	UpdateLocalView,
+	ReloadImmediately
 }

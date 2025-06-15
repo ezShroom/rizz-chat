@@ -1,4 +1,5 @@
 export enum UpstreamWsMessageAction {
 	Hello,
-	Submit
+	Submit,
+	ClaimSuperiority
 }

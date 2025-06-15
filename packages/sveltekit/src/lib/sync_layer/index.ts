@@ -1,5 +1,6 @@
-import { UpstreamAnySyncMessageAction } from "$lib/types/sync_comms/upstream/UpstreamAnySyncMessageAction"
-import type { UpstreamBridgeMessage } from "$lib/types/sync_comms/upstream/UpstreamBridgeMessage"
+import type { DownstreamBridgeMessage } from '$lib/types/sync_comms/downstream/DownstreamBridgeMessage'
+import { UpstreamAnySyncMessageAction } from '$lib/types/sync_comms/upstream/UpstreamAnySyncMessageAction'
+import type { UpstreamBridgeMessage } from '$lib/types/sync_comms/upstream/UpstreamBridgeMessage'
 
 class SyncLayer {
 	constructor() {
@@ -9,7 +10,12 @@ class SyncLayer {
 			return
 		}
 		const worker = new Worker(new URL('./workers/standard.ts', import.meta.url), { type: 'module' })
-		worker.postMessage({ action: UpstreamAnySyncMessageAction.GiveInitialData } satisfies UpstreamBridgeMessage)
+		worker.onmessage = (event: MessageEvent<DownstreamBridgeMessage>) => {
+			console.log(event)
+		}
+		worker.postMessage({
+			action: UpstreamAnySyncMessageAction.GiveInitialData
+		} satisfies UpstreamBridgeMessage)
 	}
 }
 export const syncLayer = new SyncLayer()

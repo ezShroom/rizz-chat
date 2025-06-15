@@ -4,6 +4,9 @@ import { DownstreamAnySyncMessageAction } from './DownstreamAnySyncMessageAction
 export const DownstreamBridgeMessageSchema = z.discriminatedUnion('action', [
 	z.object({
 		action: z.literal(DownstreamAnySyncMessageAction.LocalDatabaseError)
+	}),
+	z.object({
+		action: z.literal(DownstreamAnySyncMessageAction.ReloadImmediately)
 	})
 ])
 export type DownstreamBridgeMessage = z.infer<typeof DownstreamBridgeMessageSchema>

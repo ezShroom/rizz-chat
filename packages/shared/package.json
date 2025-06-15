@@ -2,6 +2,7 @@
 	"name": "shared",
 	"type": "module",
 	"private": true,
+	"version": "0.0.1",
 	"devDependencies": {
 		"@types/bun": "latest"
 	},
