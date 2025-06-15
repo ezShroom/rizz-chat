@@ -33,6 +33,7 @@ export class SyncLayer {
 
 	public async messageIn(message: UpstreamSyncLayerMessage) {
 		if (this.superiority === Superiority.Follower) {
+			console.debug('Forwarded message because this worker has no lock:', message)
 			this.messageQueue.set(message.id, message)
 			this.crossWorkerChannel.postMessage(message)
 		}
@@ -45,6 +46,7 @@ export class SyncLayer {
 
 	private async init() {
 		navigator.locks.request('worker_comms', async () => {
+			if (this.db) await migrate(this.db, localMigrations)
 			this.superiority = Superiority.Leader
 			clearInterval(this.followerMessageTimer)
 			await new Promise(() => {}) // Keep this lock until the worker dies
@@ -55,7 +57,7 @@ export class SyncLayer {
 		if (await navigator.storage.getDirectory())
 			getOPFSDatabase()
 				.then(async (db) => {
-					await migrate(db.drizzle, localMigrations)
+					if (this.superiority === Superiority.Leader) await migrate(db.drizzle, localMigrations)
 					this.db = db.drizzle
 				})
 				.catch((e) => {
@@ -75,6 +77,8 @@ export class SyncLayer {
 		this.crossWorkerChannel.onmessage = ({
 			data: receivedMessage
 		}: MessageEvent<DiscriminatedSyncLayerMessage>) => {
+			console.debug('Received message over broadcast channel:', receivedMessage)
+			console.debug('It is for superiority', receivedMessage.for, 'and we are', this.superiority)
 			if (receivedMessage.for !== this.superiority) return
 			if (receivedMessage.for === Superiority.Follower) {
 				const { message } = receivedMessage
