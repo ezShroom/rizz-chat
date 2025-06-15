@@ -11,5 +11,6 @@ export default defineConfig({
 			}
 		}
 	],
-	platform: 'browser'
+	platform: 'browser',
+	unbundle: true
 })

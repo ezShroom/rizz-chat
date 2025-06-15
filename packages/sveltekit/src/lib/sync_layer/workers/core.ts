@@ -1,76 +1,91 @@
 import { getOPFSDatabase } from './backend/storage'
-import { localMigrations, localSchema, Sender } from 'shared'
+import { localMigrations, localSchema } from 'shared'
 import { migrate } from './backend/storage/migrate'
-import { desc, eq, max, type InferInsertModel } from 'drizzle-orm'
-import { uuidv7 } from 'uuidv7'
 import type { SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
+import { UpstreamAnySyncMessageAction } from '$lib/types/sync_comms/upstream/UpstreamAnySyncMessageAction'
+import type { UpstreamSyncLayerMessage } from '$lib/types/sync_comms/upstream/UpstreamSyncLayerMessage'
+import type { UpstreamBridgeMessage } from '$lib/types/sync_comms/upstream/UpstreamBridgeMessage'
+import type { DownstreamBridgeMessage } from '$lib/types/sync_comms/downstream/DownstreamBridgeMessage'
+import { DownstreamAnySyncMessageAction } from '$lib/types/sync_comms/downstream/DownstreamAnySyncMessageAction'
+import { Superiority } from '$lib/types/sync_comms/Superiority'
+import type { DiscriminatedSyncLayerMessage } from '$lib/types/sync_comms/DiscriminatedSyncLayerMessage'
 
 export class SyncLayer {
+	private crossWorkerChannel = new BroadcastChannel('workers')
+	private specificListener: (message: DownstreamBridgeMessage) => unknown
+
 	private db: SqliteRemoteDatabase<typeof localSchema> | undefined
 	private ws: WebSocket
-	private proxyToOtherTab
+	private wsOnly: boolean | undefined
 
-	private async init() {
-		if (await navigator.storage.getDirectory()) getOPFSDatabase().then()
+	private superiority: Superiority = Superiority.Follower
+
+	private messageQueue = new Map<string, UpstreamBridgeMessage>()
+	private followerMessageTimer = setInterval(() => {
+		if (this.superiority === Superiority.Leader) return
+		this.messageQueue.forEach((message, id) =>
+			this.crossWorkerChannel.postMessage({
+				for: Superiority.Leader,
+				message: { id, ...message }
+			} satisfies DiscriminatedSyncLayerMessage)
+		)
+	}, 500)
+
+	public async messageIn(message: UpstreamSyncLayerMessage) {
+		if (this.superiority === Superiority.Follower) {
+			this.messageQueue.set(message.id, message)
+			this.crossWorkerChannel.postMessage(message)
+		}
+		switch (message.action) {
+			case UpstreamAnySyncMessageAction.GiveInitialData: {
+				return
+			}
+		}
 	}
 
-	constructor() {
+	private async init() {
+		navigator.locks.request('worker_comms', async () => {
+			this.superiority = Superiority.Leader
+			clearInterval(this.followerMessageTimer)
+			await new Promise(() => {}) // Keep this lock until the worker dies
+		})
+
+		// If we can't have a local db, we're automatically ws-only
+		this.wsOnly = Boolean(await navigator.storage.getDirectory())
+		if (await navigator.storage.getDirectory())
+			getOPFSDatabase()
+				.then(async (db) => {
+					await migrate(db.drizzle, localMigrations)
+					this.db = db.drizzle
+				})
+				.catch((e) => {
+					console.error('OPFS database could not be loaded because:', e)
+					console.error('We are falling back to WS only')
+					this.specificListener({ action: DownstreamAnySyncMessageAction.LocalDatabaseError })
+					this.wsOnly = true
+				})
+		else {
+			console.error('OPFS is disabled. We are falling back to WS only')
+			this.specificListener({ action: DownstreamAnySyncMessageAction.LocalDatabaseError })
+			this.wsOnly = true
+		}
+	}
+
+	constructor(listener: (message: DownstreamBridgeMessage) => unknown) {
+		this.crossWorkerChannel.onmessage = ({
+			data: receivedMessage
+		}: MessageEvent<DiscriminatedSyncLayerMessage>) => {
+			if (receivedMessage.for !== this.superiority) return
+			if (receivedMessage.for === Superiority.Follower) {
+				const { message } = receivedMessage
+				this.messageQueue.delete(message.id)
+				this.specificListener(message)
+				return
+			}
+			this.messageIn(receivedMessage.message)
+		}
+		this.specificListener = listener
 		this.ws = new WebSocket('ws://localhost:8787/session')
 		this.init()
 	}
 }
-;(async () => {
-	const { drizzle: db } = await getOPFSDatabase()
-	await migrate(db, localMigrations)
-	console.log('yay migrated!')
-
-	const threads = await db
-		.select()
-		.from(localSchema.thread)
-		.orderBy(desc(localSchema.thread.lastKnownModification))
-		.execute()
-
-	console.log(threads)
-
-	/*async function insertDefaultContent() {
-	const [firstThreadId, secondThreadId] = uuidv7()
-	console.log(firstThreadId, secondThreadId)
-	await db
-		.insert(localSchema.thread)
-		.values([
-			{
-				id: firstThreadId,
-				title: 'What is Rizz Chat?',
-				lastKnownModification: new Date(Date.now() + 1)
-			},
-			{
-				id: secondThreadId,
-				title: 'The cloneathon bits',
-				lastKnownModification: new Date()
-			}
-		])
-		.run()
-	await db
-		.insert(localSchema.message)
-		.values([
-			{
-				id: uuidv7(),
-				threadId: firstThreadId,
-				createdAt: new Date(),
-				body: 'What is Rizz Chat?',
-				htmlBody: 'What is Rizz Chat?',
-				sender: Sender.User,
-				model: '00000000-0000-0000-0000-000000000000'
-			},
-			{
-				id: uuidv7(),
-				title: 'What is Rizz Chat?',
-				lastKnownModification: new Date(Date.now() + 1)
-			}
-		])
-		.run()
-}*/
-	if (!threads) {
-		// This is where we WOULD insert dummy data assuming the server has nothing for us
-	}
-})()

@@ -6,17 +6,14 @@ export async function migrate(
 	db: SqliteRemoteDatabase<Record<string, unknown>>,
 	localMigrations: {
 		journal: {
-			version: string
-			dialect: 'sqlite'
 			entries: {
 				idx: number
-				version: `${string}_${string}`
 				when: number
 				tag: string
 				breakpoints: boolean
 			}[]
 		}
-		migrations: Record<`m${string}`, string>
+		migrations: Record<string, string>
 	}
 ) {
 	const migrationsTable = '__drizzle_migrations'
@@ -32,10 +29,10 @@ export async function migrate(
 
 	for (const entry of localMigrations.journal.entries) {
 		if (dbMigrations.length !== 0 && entry.when <= Number(dbMigrations[0][2])) {
-			console.log('Skipping migration', entry.idx, 'because it is already applied')
+			console.debug('Skipping migration', entry.idx, 'because it is already applied')
 			continue
 		}
-		console.log('Attempting to apply', entry.idx)
+		console.debug('Attempting to apply', entry.idx)
 
 		// Get the migration. Drizzle migrations are 4 digits long
 		const migrationMemberName: `m${string}` = `m${(entry.tag as string).split('_')[0]}`
@@ -62,7 +59,7 @@ export async function migrate(
 		]
 
 		// Do it
-		console.log(individualCommands)
+		console.debug(individualCommands)
 		await db.batch(
 			individualCommands as unknown as readonly [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]]
 		)

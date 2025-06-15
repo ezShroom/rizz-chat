@@ -5,6 +5,13 @@
 	"devDependencies": {
 		"@types/bun": "latest"
 	},
+	"dependencies": {
+		"better-auth": "^1.2.9",
+		"semver": "^7.7.2",
+		"zod": "^3.25.63",
+		"@libsql/client": "^0.14.0",
+		"drizzle-orm": "^0.40.0"
+	},
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {

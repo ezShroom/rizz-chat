@@ -1,1 +1,3 @@
-import './core'
+import { SyncLayer } from './core'
+
+new SyncLayer(console.log)
