@@ -1,12 +1,12 @@
 import { z } from 'zod/v4'
 import { Superiority } from './Superiority'
-import { DownstreamSyncLayerMessageSchema } from './downstream/DownstreamSyncLayerMessage'
 import { UpstreamSyncLayerMessageSchema } from './upstream/UpstreamSyncLayerMessage'
+import { DownstreamBridgeMessageSchema } from './downstream/DownstreamBridgeMessage'
 
 export const DiscriminatedSyncLayerMessageSchema = z.discriminatedUnion('for', [
 	z.object({
 		for: z.literal(Superiority.Follower),
-		message: DownstreamSyncLayerMessageSchema
+		message: DownstreamBridgeMessageSchema
 	}),
 	z.object({
 		for: z.literal(Superiority.Leader),

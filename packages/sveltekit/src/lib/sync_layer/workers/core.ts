@@ -21,27 +21,54 @@ import { DownstreamAnySyncMessageAction } from '$lib/types/sync_comms/downstream
 import { Superiority } from '$lib/types/sync_comms/Superiority'
 import type { DiscriminatedSyncLayerMessage } from '$lib/types/sync_comms/DiscriminatedSyncLayerMessage'
 import SuperJSON from 'superjson'
+import type { LocalCacheThread } from '$lib/types/cache/LocalCacheThread'
+import type { LocalCacheMessage } from '$lib/types/cache/LocalCacheMessage'
+import type { ConnectionStatusSummary } from '$lib/types/worker_connections/ConnectionStatusSummary'
+import { WsStatus } from '$lib/types/worker_connections/WsStatus'
+import { DbStatus } from '$lib/types/worker_connections/DbStatus'
+import { eq, sql } from 'drizzle-orm'
+
+const WS_URL = 'ws://localhost:8787/session'
 
 export class SyncLayer {
 	private crossWorkerChannel = new BroadcastChannel('workers')
 	private postMessage(message: DiscriminatedSyncLayerMessage) {
 		this.crossWorkerChannel.postMessage(message)
 	}
-
 	private sendToMainThread: (message: DownstreamBridgeMessage) => unknown
+	private distributeWidelyAsLeader(message: DownstreamBridgeMessage) {
+		this.sendToMainThread(message)
+		this.postMessage({
+			for: Superiority.Follower,
+			message
+		})
+	}
 
 	private db: SqliteRemoteDatabase<typeof localSchema> | undefined
 	private ws: WebSocket
 	private wsQueue = new Map<string, ReliableUpstreamWsMessage>()
 	private missedPings = 0
-	private synced = false
+	private memoryDataModel: {
+		synced: boolean
+		threads: LocalCacheThread[]
+		messages: Map<string, LocalCacheMessage[]>
+		[key: string]: unknown
+	} = {
+		synced: false,
+		threads: [],
+		messages: new Map(),
+		attachments: [],
+		settings: {},
+		subTier: {}
+	}
 	private pingInterval: ReturnType<typeof setInterval> | undefined
 	private sendReliably(message: ReliableUpstreamWsMessage) {
 		this.wsQueue.set(message.respondTo, message)
 		if (this.ws.readyState === this.ws.OPEN) this.ws.send(SuperJSON.stringify(message))
 	}
-	private establishWs() {
-		this.ws = new WebSocket('ws://localhost:8787/session')
+	private establishWs(initWs: boolean = true) {
+		if (initWs) this.ws = new WebSocket(WS_URL)
+		this.memoryDataModel.synced = false
 		this.ws.onmessage = (event) => {
 			if (event.data === '!') return (this.missedPings = 0) // ? response is !
 
@@ -62,7 +89,7 @@ export class SyncLayer {
 					return
 				case DownstreamWsMessageAction.NoChangesToReport:
 					// yay
-					this.synced = true
+					this.memoryDataModel.synced = true
 					return
 				case DownstreamWsMessageAction.MessageSent:
 					if (decoded.newThreadDetails) {
@@ -127,15 +154,73 @@ export class SyncLayer {
 		)
 	}, 500)
 
+	private connectionStatusSummary(): ConnectionStatusSummary {
+		return {
+			ws: this.ws.readyState === this.ws.OPEN ? WsStatus.Connected : WsStatus.NotConnected,
+			db: this.db
+				? DbStatus.Connected
+				: this.wsOnly
+					? DbStatus.NeverConnecting
+					: DbStatus.PotentiallyConnecting
+		}
+	}
+
 	public async messageIn(message: UpstreamSyncLayerMessage) {
 		if (this.superiority === Superiority.Follower) {
 			console.debug('Forwarded message because this worker has no lock:', message)
 			this.messageQueue.set(message.id, message)
 			this.postMessage({ for: Superiority.Leader, message })
+			return
 		}
 		switch (message.action) {
 			case UpstreamAnySyncMessageAction.GiveInitialData: {
-				return
+				const connectionStatus = this.connectionStatusSummary()
+				console.log(connectionStatus)
+				if (connectionStatus.db === DbStatus.Connected) {
+					// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
+					if (this.memoryDataModel.threads.length > 0) {
+						// Since we have threads in memory, check if one of them match the initial page focus
+						let requestedThreadMessages: LocalCacheMessage[] | undefined
+						if (
+							message.includeMessagesFrom &&
+							this.memoryDataModel.threads.some(
+								(thread) => thread.id === message.includeMessagesFrom
+							)
+						) {
+							// Try to set requestedThreadMessages
+							requestedThreadMessages =
+								this.memoryDataModel.messages.get(message.includeMessagesFrom) ??
+								(await (async (): Promise<LocalCacheMessage[] | undefined> => {
+									const rawDbOutput = await this.db
+										?.select()
+										.from(localSchema.message)
+										.where(eq(localSchema.message.threadId, sql.placeholder('threadId')))
+										.prepare()
+										.execute({ threadId: message.includeMessagesFrom })
+									if (!rawDbOutput || rawDbOutput.length === 0) return
+									const messages = rawDbOutput.map((item) => ({
+										id: item.id,
+										body: item.body,
+										sent: item.createdAt,
+										sender: item.sender,
+										modelConfig: {
+											model: item.model,
+											reasoningLevel: item.reasoningLevel,
+											search: item.search
+										}
+									}))
+									this.memoryDataModel.messages.set(message.includeMessagesFrom ?? '', messages)
+									return messages
+								})())
+						}
+						this.distributeWidelyAsLeader({
+							action: DownstreamAnySyncMessageAction.InitialData,
+							responseTo: message.id,
+							threads: this.memoryDataModel.threads,
+							requestedThreadMessages
+						})
+					}
+				}
 			}
 		}
 	}
@@ -149,8 +234,12 @@ export class SyncLayer {
 		})
 
 		// If we can't have a local db, we're automatically ws-only
-		this.wsOnly = Boolean(!(await navigator.storage.getDirectory()))
-		if (this.wsOnly) {
+		if (
+			!('storage' in navigator) ||
+			!('getDirectory' in navigator.storage) ||
+			!(await navigator.storage.getDirectory())
+		) {
+			this.wsOnly = false
 			console.error('OPFS is disabled. We are falling back to WS only')
 			this.sendToMainThread({ action: DownstreamAnySyncMessageAction.LocalDatabaseError })
 			return
@@ -177,14 +266,15 @@ export class SyncLayer {
 			if (receivedMessage.for !== this.superiority) return
 			if (receivedMessage.for === Superiority.Follower) {
 				const { message } = receivedMessage
-				this.messageQueue.delete(message.id)
+				if ('responseTo' in message) this.messageQueue.delete(message.responseTo)
 				this.sendToMainThread(message)
 				return
 			}
 			this.messageIn(receivedMessage.message)
 		}
 		this.sendToMainThread = listener
-		this.establishWs()
+		this.ws = new WebSocket(WS_URL)
+		this.establishWs(false) // We've already initialised so on this occasion, no need to do it again
 		this.init()
 	}
 }

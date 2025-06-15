@@ -46,7 +46,6 @@
 		"ai": "^4.3.16",
 		"better-auth": "^1.2.9",
 		"clsx": "^2.1.1",
-		"drizzle-orm": "^0.44.2",
 		"semver": "^7.7.2",
 		"shared": "workspace:*",
 		"superjson": "^2.2.2",
