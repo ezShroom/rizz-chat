@@ -20,6 +20,7 @@
 		"types": "bun turbo types",
 		"migrate": "bun drizzle-kit migrate",
 		"generate": "bun drizzle-kit generate",
+		"deploy": "bun turbo deploy",
 		"local:generate": "bun drizzle-kit generate --config=drizzle-local.config.ts",
 		"do:generate": "bun drizzle-kit generate --config=drizzle-do.config.ts"
 	},

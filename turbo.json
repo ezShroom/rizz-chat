@@ -37,6 +37,7 @@
 		},
 		"db": { "persistent": true, "cache": false },
 		"dev": { "dependsOn": ["shared#build"], "persistent": true, "cache": false },
-		"preview": { "dependsOn": ["sveltekit#build"], "persistent": true, "cache": false }
+		"preview": { "dependsOn": ["sveltekit#build"], "persistent": true, "cache": false },
+		"deploy": { "dependsOn": ["build", "^deploy"] }
 	}
 }
