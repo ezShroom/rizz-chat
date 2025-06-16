@@ -1,5 +1,5 @@
 {
-	"name": "rizz-chat-api",
+	"name": "rizz-prod-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-06-08",
 	"workers_dev": false,
