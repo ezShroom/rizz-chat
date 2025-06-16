@@ -46,6 +46,7 @@ export class SyncLayer {
 
 	private db: SqliteRemoteDatabase<typeof localSchema> | undefined
 	private ws: WebSocket
+	private currentWsConnectionNumber = 0
 	private wsQueue = new Map<string, ReliableUpstreamWsMessage>()
 	private missedPings = 0
 	private memoryDataModel: {
@@ -66,10 +67,23 @@ export class SyncLayer {
 		this.wsQueue.set(message.respondTo, message)
 		if (this.ws.readyState === this.ws.OPEN) this.ws.send(SuperJSON.stringify(message))
 	}
-	private establishWs(initWs: boolean = true) {
+
+	private allowWsConnectionPromise = new Promise<void>((resolve) => {
+		resolve()
+	})
+	private wsNotRelevant(connectionNumber: number) {
+		return this.currentWsConnectionNumber !== connectionNumber
+	}
+	private async establishWs(initWs: boolean = true) {
+		await this.allowWsConnectionPromise
+		this.allowWsConnectionPromise = new Promise((resolve) => setTimeout(resolve, 500))
 		if (initWs) this.ws = new WebSocket(WS_URL)
+		const currentWs = this.ws
+		this.currentWsConnectionNumber++
+		const thisWsConnection = this.currentWsConnectionNumber
 		this.memoryDataModel.synced = false
 		this.ws.onmessage = (event) => {
+			if (this.wsNotRelevant(thisWsConnection)) currentWs.close()
 			if (event.data === '!') return (this.missedPings = 0) // ? response is !
 
 			let decoded: DownstreamWsMessage
@@ -105,6 +119,7 @@ export class SyncLayer {
 			}
 		}
 		this.ws.onopen = () => {
+			if (this.wsNotRelevant(thisWsConnection)) currentWs.close()
 			this.ws.send(
 				SuperJSON.stringify({
 					action: UpstreamWsMessageAction.Hello,
@@ -122,10 +137,14 @@ export class SyncLayer {
 			}
 		}
 		this.ws.onerror = () => {
+			if (this.wsNotRelevant(thisWsConnection)) return
 			clearInterval(this.pingInterval)
+			// Just in case, to make sure we're not queueing up loads of sockets we won't use
+			this.ws.close()
 			this.establishWs()
 		}
 		this.ws.onclose = (event) => {
+			if (this.wsNotRelevant(thisWsConnection)) return
 			clearInterval(this.pingInterval)
 			switch (event.code) {
 				case CloseReason.SchemaNotSatisfied:
@@ -144,6 +163,7 @@ export class SyncLayer {
 	private superiority: Superiority = Superiority.Follower
 
 	private messageQueue = new Map<string, UpstreamBridgeMessage>()
+	private messageAwaitingResourcesQueue = new Map<string, UpstreamSyncLayerMessage>()
 	private followerMessageTimer = setInterval(() => {
 		if (this.superiority === Superiority.Leader) return
 		this.messageQueue.forEach((message, id) =>
@@ -165,6 +185,19 @@ export class SyncLayer {
 		}
 	}
 
+	// Some notes on messages:
+	// - Messages can be sent by any tab (especially if we are a SharedWorker, which it isn't our job to know)
+	//   so they must be responded to everywhere
+	// - There are 6 states we can be in resources-wise:
+	//   DB:
+	//   - Never connecting
+	//   - Potentially connecting (we might only find out we can't later!)
+	//   - Connected
+	//   WS:
+	//   - Not connected
+	//   - Connected
+	//   If we have no resources (no DB or WS) and we need resources, we send to messageAwaitingResourcesQueue.
+	//   As soon as resources are available, all messages in messageAwaitingResourcesQueue will be submitted again.
 	public async messageIn(message: UpstreamSyncLayerMessage) {
 		if (this.superiority === Superiority.Follower) {
 			console.debug('Forwarded message because this worker has no lock:', message)
@@ -176,51 +209,50 @@ export class SyncLayer {
 			case UpstreamAnySyncMessageAction.GiveInitialData: {
 				const connectionStatus = this.connectionStatusSummary()
 				console.log(connectionStatus)
-				if (connectionStatus.db === DbStatus.Connected) {
-					// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
-					if (this.memoryDataModel.threads.length > 0) {
-						// Since we have threads in memory, check if one of them match the initial page focus
-						let requestedThreadMessages: LocalCacheMessage[] | undefined
-						if (
-							message.includeMessagesFrom &&
-							this.memoryDataModel.threads.some(
-								(thread) => thread.id === message.includeMessagesFrom
-							)
-						) {
-							// Try to set requestedThreadMessages
-							requestedThreadMessages =
-								this.memoryDataModel.messages.get(message.includeMessagesFrom) ??
-								(await (async (): Promise<LocalCacheMessage[] | undefined> => {
-									const rawDbOutput = await this.db
-										?.select()
-										.from(localSchema.message)
-										.where(eq(localSchema.message.threadId, sql.placeholder('threadId')))
-										.prepare()
-										.execute({ threadId: message.includeMessagesFrom })
-									if (!rawDbOutput || rawDbOutput.length === 0) return
-									const messages = rawDbOutput.map((item) => ({
-										id: item.id,
-										body: item.body,
-										sent: item.createdAt,
-										sender: item.sender,
-										modelConfig: {
-											model: item.model,
-											reasoningLevel: item.reasoningLevel,
-											search: item.search
-										}
-									}))
-									this.memoryDataModel.messages.set(message.includeMessagesFrom ?? '', messages)
-									return messages
-								})())
-						}
-						this.distributeWidelyAsLeader({
-							action: DownstreamAnySyncMessageAction.InitialData,
-							responseTo: message.id,
-							threads: this.memoryDataModel.threads,
-							requestedThreadMessages
-						})
+				// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
+				if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
+					// Since we have threads in memory, check if one of them match the initial page focus
+					let requestedThreadMessages: LocalCacheMessage[] | undefined
+					if (
+						message.includeMessagesFrom &&
+						this.memoryDataModel.threads.some((thread) => thread.id === message.includeMessagesFrom)
+					) {
+						// Try to set requestedThreadMessages
+						requestedThreadMessages =
+							this.memoryDataModel.messages.get(message.includeMessagesFrom) ??
+							(await (async (): Promise<LocalCacheMessage[] | undefined> => {
+								const rawDbOutput = await this.db
+									?.select()
+									.from(localSchema.message)
+									.where(eq(localSchema.message.threadId, sql.placeholder('threadId')))
+									.prepare()
+									.execute({ threadId: message.includeMessagesFrom })
+								if (!rawDbOutput || rawDbOutput.length === 0) return
+								const messages = rawDbOutput.map((item) => ({
+									id: item.id,
+									body: item.body,
+									sent: item.createdAt,
+									sender: item.sender,
+									modelConfig: {
+										model: item.model,
+										reasoningLevel: item.reasoningLevel,
+										search: item.search
+									}
+								}))
+								this.memoryDataModel.messages.set(message.includeMessagesFrom ?? '', messages)
+								return messages
+							})())
 					}
+					this.distributeWidelyAsLeader({
+						action: DownstreamAnySyncMessageAction.InitialData,
+						responseTo: message.id,
+						threads: this.memoryDataModel.threads,
+						requestedThreadMessages
+					})
+					return
 				}
+				// No resources allow for this request to succeed - queue it for when it can
+				this.messageAwaitingResourcesQueue.set(message.id, message)
 			}
 		}
 	}
@@ -248,6 +280,8 @@ export class SyncLayer {
 			.then(async (db) => {
 				if (this.superiority === Superiority.Leader) await migrate(db.drizzle, localMigrations)
 				this.db = db.drizzle
+				if (this.superiority === Superiority.Leader)
+					this.messageAwaitingResourcesQueue.forEach(this.messageIn)
 			})
 			.catch((e) => {
 				console.error('OPFS database could not be loaded because:', e)

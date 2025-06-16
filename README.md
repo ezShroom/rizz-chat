@@ -8,6 +8,4 @@ rizz chat has all the features
 
 ## use
 
-try rapidly at https://chat.rizz.zone
-
-or deploy two funny little cloudflare workers! [instructions soon]
+try rapidly at https://clone.rizz.zone
