@@ -10,6 +10,7 @@ import {
 import { PUBLIC_DISCORD_APP_ID } from '$env/static/public'
 import { getAuthServer, getDB } from 'shared'
 
+console.log(BETTER_AUTH_URL, BETTER_AUTH_SECRET)
 export const auth = getAuthServer(
 	getDB({ DATABASE_URL, DATABASE_AUTH_TOKEN }),
 	{
