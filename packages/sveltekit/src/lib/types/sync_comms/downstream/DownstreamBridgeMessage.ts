@@ -15,6 +15,9 @@ export const DownstreamBridgeMessageSchema = z.discriminatedUnion('action', [
 		responseTo: z.uuidv4(),
 		threads: z.array(LocalCacheThreadSchema),
 		requestedThreadMessages: z.array(LocalCacheMessageSchema).optional()
+	}),
+	z.object({
+		action: z.literal(DownstreamAnySyncMessageAction.NewLeaderSoPleaseSprayQueuedMessages)
 	})
 ])
 export type DownstreamBridgeMessage = z.infer<typeof DownstreamBridgeMessageSchema>

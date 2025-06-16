@@ -121,6 +121,10 @@ export class UserStateDO extends DurableObject<Env> {
 				}
 				return
 			}
+			case UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages: {
+				console.log(decoded)
+				return
+			}
 			default:
 			// assertNever()
 		}

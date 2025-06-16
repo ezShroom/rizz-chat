@@ -1,5 +1,6 @@
 export enum DownstreamAnySyncMessageAction {
 	LocalDatabaseError,
 	InitialData,
-	ReloadImmediately
+	ReloadImmediately,
+	NewLeaderSoPleaseSprayQueuedMessages
 }

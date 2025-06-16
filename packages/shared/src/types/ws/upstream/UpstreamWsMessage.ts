@@ -13,7 +13,12 @@ export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 		message: SomeTransferableMessageSchema,
 		respondTo: z.uuidv4()
 	}),
-	z.object({ action: z.literal(UpstreamWsMessageAction.ClaimSuperiority) })
+	z.object({ action: z.literal(UpstreamWsMessageAction.ClaimSuperiority) }),
+	z.object({
+		action: z.literal(UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages),
+		messagesFromThread: z.uuid().optional(),
+		respondTo: z.uuidv4()
+	})
 ])
 export type UpstreamWsMessage = z.infer<typeof UpstreamWsMessageSchema>
 export const isUpstreamWsMessage = (obj: unknown): obj is UpstreamWsMessage =>

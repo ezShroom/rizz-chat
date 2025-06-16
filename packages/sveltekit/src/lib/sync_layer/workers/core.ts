@@ -15,7 +15,6 @@ import { migrate } from './backend/storage/migrate'
 import type { SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
 import { UpstreamAnySyncMessageAction } from '$lib/types/sync_comms/upstream/UpstreamAnySyncMessageAction'
 import type { UpstreamSyncLayerMessage } from '$lib/types/sync_comms/upstream/UpstreamSyncLayerMessage'
-import type { UpstreamBridgeMessage } from '$lib/types/sync_comms/upstream/UpstreamBridgeMessage'
 import type { DownstreamBridgeMessage } from '$lib/types/sync_comms/downstream/DownstreamBridgeMessage'
 import { DownstreamAnySyncMessageAction } from '$lib/types/sync_comms/downstream/DownstreamAnySyncMessageAction'
 import { Superiority } from '$lib/types/sync_comms/Superiority'
@@ -135,6 +134,9 @@ export class SyncLayer {
 			for (const queuedWsMessage of this.wsQueue.values()) {
 				this.ws.send(SuperJSON.stringify(queuedWsMessage))
 			}
+
+			// Since we're now an available resource, we need to nudge the local message queue along too
+			this.processMessagesAwaitingResources()
 		}
 		this.ws.onerror = () => {
 			if (this.wsNotRelevant(thisWsConnection)) return
@@ -160,19 +162,10 @@ export class SyncLayer {
 
 	private wsOnly: boolean | undefined
 
-	private superiority: Superiority = Superiority.Follower
+	private superiority: Superiority
 
-	private messageQueue = new Map<string, UpstreamBridgeMessage>()
+	private messageQueue = new Map<string, UpstreamSyncLayerMessage>()
 	private messageAwaitingResourcesQueue = new Map<string, UpstreamSyncLayerMessage>()
-	private followerMessageTimer = setInterval(() => {
-		if (this.superiority === Superiority.Leader) return
-		this.messageQueue.forEach((message, id) =>
-			this.postMessage({
-				for: Superiority.Leader,
-				message: { id, ...message }
-			} satisfies DiscriminatedSyncLayerMessage)
-		)
-	}, 500)
 
 	private connectionStatusSummary(): ConnectionStatusSummary {
 		return {
@@ -199,6 +192,7 @@ export class SyncLayer {
 	//   If we have no resources (no DB or WS) and we need resources, we send to messageAwaitingResourcesQueue.
 	//   As soon as resources are available, all messages in messageAwaitingResourcesQueue will be submitted again.
 	public async messageIn(message: UpstreamSyncLayerMessage) {
+		console.log('messageIn')
 		if (this.superiority === Superiority.Follower) {
 			console.debug('Forwarded message because this worker has no lock:', message)
 			this.messageQueue.set(message.id, message)
@@ -210,7 +204,7 @@ export class SyncLayer {
 				const connectionStatus = this.connectionStatusSummary()
 				console.log(connectionStatus)
 				// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
-				if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
+				/*if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
 					// Since we have threads in memory, check if one of them match the initial page focus
 					let requestedThreadMessages: LocalCacheMessage[] | undefined
 					if (
@@ -250,18 +244,43 @@ export class SyncLayer {
 						requestedThreadMessages
 					})
 					return
+				}*/
+				if (connectionStatus.ws === WsStatus.Connected) {
+					if (!this.wsQueue.has(message.id))
+						this.sendReliably({
+							action: UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages,
+							respondTo: message.id,
+							messagesFromThread: message.includeMessagesFrom
+						})
+					if (connectionStatus.db === DbStatus.NeverConnecting) return
 				}
-				// No resources allow for this request to succeed - queue it for when it can
+				// No resources (or only ws, in which case the database *might* come alive) allow for this request to succeed - queue it for when it can
 				this.messageAwaitingResourcesQueue.set(message.id, message)
 			}
 		}
 	}
+	private processMessagesAwaitingResources() {
+		this.messageAwaitingResourcesQueue.forEach(this.messageIn.bind(this))
+	}
 
+	private migrated = false
+	private async migrateIfNeeded() {
+		await navigator.locks.request('migration', async () => {
+			if (this.migrated || !this.db) return
+			await migrate(this.db, localMigrations)
+			this.migrated = true
+		})
+	}
 	private async init() {
 		navigator.locks.request('worker_comms', async () => {
-			if (this.db) await migrate(this.db, localMigrations)
+			if (this.db) await this.migrateIfNeeded()
 			this.superiority = Superiority.Leader
-			clearInterval(this.followerMessageTimer)
+			this.crossWorkerChannel.postMessage({
+				for: Superiority.Follower,
+				message: { action: DownstreamAnySyncMessageAction.NewLeaderSoPleaseSprayQueuedMessages }
+			} satisfies DiscriminatedSyncLayerMessage)
+			this.messageQueue.forEach(this.messageIn.bind(this))
+			// Do not clear the message queue - we need it to figure out whether to respond within this worker!
 			await new Promise(() => {}) // Keep this lock until the worker dies
 		})
 
@@ -278,10 +297,9 @@ export class SyncLayer {
 		}
 		getOPFSDatabase()
 			.then(async (db) => {
-				if (this.superiority === Superiority.Leader) await migrate(db.drizzle, localMigrations)
+				if (this.superiority === Superiority.Leader) await this.migrateIfNeeded()
 				this.db = db.drizzle
-				if (this.superiority === Superiority.Leader)
-					this.messageAwaitingResourcesQueue.forEach(this.messageIn)
+				if (this.superiority === Superiority.Leader) this.processMessagesAwaitingResources()
 			})
 			.catch((e) => {
 				console.error('OPFS database could not be loaded because:', e)
@@ -292,6 +310,8 @@ export class SyncLayer {
 	}
 
 	constructor(listener: (message: DownstreamBridgeMessage) => unknown) {
+		console.log('constructor')
+		this.superiority = Superiority.Follower
 		this.crossWorkerChannel.onmessage = ({
 			data: receivedMessage
 		}: MessageEvent<DiscriminatedSyncLayerMessage>) => {
@@ -301,6 +321,14 @@ export class SyncLayer {
 			if (receivedMessage.for === Superiority.Follower) {
 				const { message } = receivedMessage
 				if ('responseTo' in message) this.messageQueue.delete(message.responseTo)
+				if (
+					message.action === DownstreamAnySyncMessageAction.NewLeaderSoPleaseSprayQueuedMessages
+				) {
+					this.messageQueue.forEach((queuedMessage) =>
+						this.crossWorkerChannel.postMessage({ for: Superiority.Leader, message: queuedMessage })
+					)
+					return
+				}
 				this.sendToMainThread(message)
 				return
 			}
