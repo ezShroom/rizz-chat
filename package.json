@@ -21,8 +21,8 @@
 		"migrate": "bun drizzle-kit migrate",
 		"generate": "bun drizzle-kit generate",
 		"deploy": "bun turbo deploy",
-		"local:generate": "bun drizzle-kit generate --config=drizzle-local.config.ts",
-		"do:generate": "bun drizzle-kit generate --config=drizzle-do.config.ts"
+		"frontline:generate": "bun drizzle-kit generate --config=drizzle-frontline.config.ts",
+		"auth:generate": "bun drizzle-kit generate"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.3.0",
@@ -47,13 +47,13 @@
 		"ai": "^4.3.16",
 		"clsx": "^2.1.1",
 		"semver": "^7.7.2",
-		"shared": "workspace:*",
 		"superjson": "^2.2.2",
 		"svelte-bootstrap-icons": "^3.3.0",
 		"tailwind-scrollbar": "^4.0.2",
 		"uuidv7": "^1.0.2",
 		"wa-sqlite": "github:rhashimoto/wa-sqlite",
-		"zod": "^3.25.63"
+		"zod": "^3.25.63",
+		"shared": "workspace:*"
 	},
 	"packageManager": "bun@1.2.15"
 }

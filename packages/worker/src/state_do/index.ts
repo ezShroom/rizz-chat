@@ -8,12 +8,17 @@ import {
 	DownstreamWsMessageAction,
 	CloseReason,
 	globalConfig,
-	ModelProviders
+	ModelProviders,
+	frontlineSchema,
+	frontlineMigrations
 } from 'shared'
 import { createGroq } from '@ai-sdk/groq'
 import { streamText, type CoreMessage, type StreamTextResult, type ToolSet } from 'ai'
 import { uuidv7 } from 'uuidv7'
 import { gt } from 'semver'
+import { drizzle, type DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite'
+import { migrate } from 'drizzle-orm/durable-sqlite/migrator'
+import { eq } from 'drizzle-orm'
 
 export class UserStateDO extends DurableObject<Env> {
 	private ongoingMessages: Record<
@@ -21,13 +26,19 @@ export class UserStateDO extends DurableObject<Env> {
 		{ threadId: string; started: Date; billFor: boolean; tokens: Record<number, string> }
 	> = {}
 
+	storage: DurableObjectStorage
+	db: DrizzleSqliteDODatabase<Record<string, unknown>>
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env)
 
 		if (!ctx.getWebSocketAutoResponse())
 			ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('?', '!'))
 
-		console.log('we have Constructed very hard')
+		this.storage = ctx.storage
+		this.db = drizzle(this.storage, { logger: false })
+
+		// Make sure all migrations complete before accepting potential queries
+		ctx.blockConcurrencyWhile(() => migrate(this.db, frontlineMigrations))
 	}
 
 	public override async fetch(/*request: Request*/) {
@@ -82,6 +93,36 @@ export class UserStateDO extends DurableObject<Env> {
 				return
 			case UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages: {
 				// TODO: Use some memory
+				const threads = await this.db.select().from(frontlineSchema.thread).execute()
+				const relevantThreadMessages =
+					decoded.messagesFromThread &&
+					threads.some((thread) => thread.id === decoded.messagesFromThread)
+						? await this.db
+								.select()
+								.from(frontlineSchema.message)
+								.where(eq(frontlineSchema.message, decoded.messagesFromThread))
+								.execute()
+						: undefined
+				ws.send(
+					SuperJSON.stringify({
+						action: DownstreamWsMessageAction.ThreadsAndPossiblyMessages,
+						responseTo: decoded.respondTo,
+						threads: threads,
+						requestedMessages: relevantThreadMessages
+							? relevantThreadMessages.map((item) => ({
+									id: item.id,
+									body: item.body,
+									sent: item.createdAt,
+									sender: item.sender,
+									modelConfig: {
+										model: item.model,
+										reasoningLevel: item.reasoningLevel,
+										search: item.search
+									}
+								}))
+							: undefined
+					} satisfies DownstreamWsMessage)
+				)
 				return
 			}
 			case UpstreamWsMessageAction.Submit: {

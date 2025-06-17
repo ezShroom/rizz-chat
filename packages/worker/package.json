@@ -17,6 +17,7 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
-		"shared": "workspace:*"
+		"shared": "workspace:*",
+		"drizzle-orm": "^0.44.2"
 	}
 }

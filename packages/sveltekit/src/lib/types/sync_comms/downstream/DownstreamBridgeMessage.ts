@@ -1,7 +1,6 @@
 import { z } from 'zod/v4'
 import { DownstreamAnySyncMessageAction } from './DownstreamAnySyncMessageAction'
-import { LocalCacheThreadSchema } from '$lib/types/cache/LocalCacheThread'
-import { LocalCacheMessageSchema } from '$lib/types/cache/LocalCacheMessage'
+import { LocalCacheThreadSchema,LocalCacheMessageSchema } from 'shared'
 
 export const DownstreamBridgeMessageSchema = z.discriminatedUnion('action', [
 	z.object({

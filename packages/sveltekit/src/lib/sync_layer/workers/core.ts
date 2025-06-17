@@ -4,12 +4,14 @@ import {
 	DownstreamWsMessageAction,
 	globalConfig,
 	isDownstreamWsMessage,
-	localMigrations,
-	localSchema,
+	frontlineMigrations,
+	frontlineSchema,
 	UpstreamWsMessageAction,
 	type DownstreamWsMessage,
 	type ReliableUpstreamWsMessage,
-	type UpstreamWsMessage
+	type UpstreamWsMessage,
+	type LocalCacheThread,
+	type LocalCacheMessage
 } from 'shared'
 import { migrate } from './backend/storage/migrate'
 import type { SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
@@ -20,8 +22,6 @@ import { DownstreamAnySyncMessageAction } from '$lib/types/sync_comms/downstream
 import { Superiority } from '$lib/types/sync_comms/Superiority'
 import type { DiscriminatedSyncLayerMessage } from '$lib/types/sync_comms/DiscriminatedSyncLayerMessage'
 import SuperJSON from 'superjson'
-import type { LocalCacheThread } from '$lib/types/cache/LocalCacheThread'
-import type { LocalCacheMessage } from '$lib/types/cache/LocalCacheMessage'
 import type { ConnectionStatusSummary } from '$lib/types/worker_connections/ConnectionStatusSummary'
 import { WsStatus } from '$lib/types/worker_connections/WsStatus'
 import { DbStatus } from '$lib/types/worker_connections/DbStatus'
@@ -43,7 +43,7 @@ export class SyncLayer {
 		})
 	}
 
-	private db: SqliteRemoteDatabase<typeof localSchema> | undefined
+	private db: SqliteRemoteDatabase<typeof frontlineSchema> | undefined
 	private ws: WebSocket
 	private currentWsConnectionNumber = 0
 	private wsQueue = new Map<string, ReliableUpstreamWsMessage>()
@@ -204,7 +204,7 @@ export class SyncLayer {
 				const connectionStatus = this.connectionStatusSummary()
 				console.log(connectionStatus)
 				// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
-				/*if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
+				if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
 					// Since we have threads in memory, check if one of them match the initial page focus
 					let requestedThreadMessages: LocalCacheMessage[] | undefined
 					if (
@@ -217,8 +217,8 @@ export class SyncLayer {
 							(await (async (): Promise<LocalCacheMessage[] | undefined> => {
 								const rawDbOutput = await this.db
 									?.select()
-									.from(localSchema.message)
-									.where(eq(localSchema.message.threadId, sql.placeholder('threadId')))
+									.from(frontlineSchema.message)
+									.where(eq(frontlineSchema.message.threadId, sql.placeholder('threadId')))
 									.prepare()
 									.execute({ threadId: message.includeMessagesFrom })
 								if (!rawDbOutput || rawDbOutput.length === 0) return
@@ -244,7 +244,7 @@ export class SyncLayer {
 						requestedThreadMessages
 					})
 					return
-				}*/
+				}
 				if (connectionStatus.ws === WsStatus.Connected) {
 					if (!this.wsQueue.has(message.id))
 						this.sendReliably({
@@ -264,12 +264,12 @@ export class SyncLayer {
 	}
 
 	private migrated = false
-	private async migrateIfNeeded(db: SqliteRemoteDatabase<typeof localSchema>) {
+	private async migrateIfNeeded(db: SqliteRemoteDatabase<typeof frontlineSchema>) {
 		if (this.migrated) return console.log('Skipping migration because it was already done')
 		console.log('Awaiting migration...')
 		await navigator.locks.request('migration', async () => {
 			if (this.migrated) return console.log('Stopped migration because another ended before ours')
-			await migrate(db, localMigrations)
+			await migrate(db, frontlineMigrations)
 			this.migrated = true
 		})
 		console.log('Done!')

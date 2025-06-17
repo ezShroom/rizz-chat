@@ -16,5 +16,12 @@
 			"tag": "v1",
 			"new_sqlite_classes": ["UserStateDO"]
 		}
+	],
+	"rules": [
+		{
+			"type": "Text",
+			"globs": ["**/*.sql"],
+			"fallthrough": true
+		}
 	]
 }

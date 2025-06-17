@@ -2,10 +2,10 @@
 	import ChatBar from '$lib/components/chat_pane/ChatBar.svelte'
 	import { UpstreamWsMessageAction, type ReliableUpstreamWsMessage } from 'shared'
 
-	const {
+	/*const {
 		message,
 		sendReliably
-	}: { message: string; sendReliably: (obj: ReliableUpstreamWsMessage) => unknown } = $props()
+	}: { message: string; sendReliably: (obj: ReliableUpstreamWsMessage) => unknown } = $props()*/
 </script>
 
 <main class="flex grow flex-col bg-stone-950 text-white">
@@ -16,14 +16,7 @@
 			<div class="max-w-128 rounded-xl rounded-br-none bg-stone-900 p-4">What is Rizz Chat?</div>
 		</div>
 		<div class="p-4">Rizz Chat is the best!</div>
-		<div class="p-4 break-words">{message}</div>
+		<div class="p-4 break-words">aaa</div>
 	</div>
-	<ChatBar
-		onSubmit={(message) =>
-			sendReliably({
-				action: UpstreamWsMessageAction.Submit,
-				message,
-				respondTo: crypto.randomUUID()
-			})}
-	/>
+	<ChatBar />
 </main>

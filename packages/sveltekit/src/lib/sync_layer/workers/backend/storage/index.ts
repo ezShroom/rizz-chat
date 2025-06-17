@@ -6,7 +6,7 @@ import SQLiteESMFactory from 'wa-sqlite/dist/wa-sqlite.mjs'
 import * as SQLite from 'wa-sqlite/src/sqlite-api.js'
 import wasmUrl from 'wa-sqlite/dist/wa-sqlite.wasm?url'
 import { drizzle, SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
-import { localSchema } from 'shared'
+import { frontlineSchema } from 'shared'
 
 // I've written comments about my ugly code before. This is probably the MOST ugly it's going to get
 // The good news is there isn't much of a need to touch it
@@ -65,7 +65,7 @@ async function basicDrizzleQuery(
 }
 
 export async function getOPFSDatabase(): Promise<{
-	drizzle: SqliteRemoteDatabase<typeof localSchema>
+	drizzle: SqliteRemoteDatabase<typeof frontlineSchema>
 	raw: { sqlite3: unknown; db: number }
 }> {
 	// 1. fetch the wasm binary

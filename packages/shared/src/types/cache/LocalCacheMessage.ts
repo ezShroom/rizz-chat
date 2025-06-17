@@ -1,4 +1,5 @@
-import { ModelConfigSchema, Sender } from 'shared'
+import { ModelConfigSchema } from '../messages/ModelConfig'
+import { Sender } from '../messages/Sender'
 import { z } from 'zod/v4'
 
 export const LocalCacheMessageSchema = z.object({

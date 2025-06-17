@@ -16,11 +16,11 @@
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "tsdown --sourcemap",
+		"legacy_build": "tsdown --sourcemap",
 		"lint": "eslint .",
 		"style": "prettier -c .",
 		"check": "tsc --noEmit",
-		"dev": "tsdown --watch --no-clean --sourcemap",
+		"legacy_dev": "tsdown --watch --no-clean --sourcemap",
 		"fix_style": "prettier -w ."
 	},
 	"peerDependencies": {

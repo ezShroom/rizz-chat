@@ -25,7 +25,7 @@
 			"outputs": ["dist/**", ".svelte-kit/**", ".wrangler/**"]
 		},
 		"check": {
-			"dependsOn": ["shared#build", "^check"]
+			"dependsOn": ["^check"]
 		},
 		"style": {
 			"dependsOn": ["^style"]
@@ -33,10 +33,10 @@
 		"fix_style": {},
 		"types": {},
 		"lint": {
-			"dependsOn": ["shared#build", "^lint"]
+			"dependsOn": ["^lint"]
 		},
 		"db": { "persistent": true, "cache": false },
-		"dev": { "dependsOn": ["shared#build"], "persistent": true, "cache": false },
+		"dev": { "persistent": true, "cache": false },
 		"preview": { "dependsOn": ["sveltekit#build"], "persistent": true, "cache": false },
 		"deploy": { "dependsOn": ["build", "^deploy"] }
 	}

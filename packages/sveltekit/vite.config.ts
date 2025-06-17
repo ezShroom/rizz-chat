@@ -5,9 +5,6 @@ import devtoolsJson from 'vite-plugin-devtools-json'
 
 export default defineConfig({
 	plugins: [
-		tailwindcss(),
-		sveltekit(),
-		devtoolsJson(),
 		{
 			name: 'vite-plugin-sql-raw',
 			enforce: 'pre',
@@ -16,7 +13,13 @@ export default defineConfig({
 					return `export default \`${code.replaceAll('`', '\\`')}\`;`
 				}
 			}
-		}
+		},
+		tailwindcss(),
+		sveltekit(),
+		devtoolsJson()
 	],
+	optimizeDeps: {
+		exclude: ['wa-sqlite']
+	},
 	server: { fs: { allow: ['./package.json'] } }
 })

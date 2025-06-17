@@ -7,11 +7,11 @@ export const thread = sqliteTable(
 	{
 		id: text().primaryKey(),
 		title: text().notNull(),
-		lastKnownModification: integer({ mode: 'timestamp_ms' }).notNull()
+		lastModified: integer({ mode: 'timestamp_ms' }).notNull()
 	},
 	(table) => [
-		index('thread_lastKnownModification_idx').on(table.lastKnownModification),
-		index('thread_title+lastKnownModification_idx').on(table.title, table.lastKnownModification)
+		index('thread_lastKnownModification_idx').on(table.lastModified),
+		index('thread_title+lastKnownModification_idx').on(table.title, table.lastModified)
 	]
 )
 export const message = sqliteTable(

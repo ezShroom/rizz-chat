@@ -1,12 +1,11 @@
 <script lang="ts">
 	import AuthSettingsButton from '$lib/components/nav/AuthSettingsButton.svelte'
 	import ChatListItem from '$lib/components/nav/ChatListItem.svelte'
-	import type { LocalCacheThread } from '$lib/types/cache/LocalCacheThread'
 
-	const { threadCache }: { threadCache: LocalCacheThread[] } = $props()
-	const sortedCache = $derived(
+	// const { threadCache }: { threadCache: undefined } = $props()
+	/*const sortedCache = $derived(
 		[...threadCache].sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime())
-	)
+	)*/
 </script>
 
 <nav
@@ -17,9 +16,9 @@
 		class="scrollbar-thin scrollbar-thumb-black scrollbar-hover:scrollbar-thumb-stone-600 scrollbar-track-black scrollbar-thumb-rounded-full min-h-0 grow overflow-y-auto pr-2 transition-all"
 		style="overflow-anchor: none"
 	>
-		{#each sortedCache as cachedThread (cachedThread.id)}
+		<!--{#each sortedCache as cachedThread (cachedThread.id)}
 			<ChatListItem selected={false}>{cachedThread.title}</ChatListItem>
-		{/each}
+		{/each}-->
 	</div>
 	<AuthSettingsButton />
 </nav>

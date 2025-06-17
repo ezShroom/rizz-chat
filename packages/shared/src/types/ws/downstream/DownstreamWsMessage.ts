@@ -1,5 +1,7 @@
 import { z } from 'zod/v4'
 import { DownstreamWsMessageAction } from './DownstreamWsMessageAction'
+import { LocalCacheMessageSchema } from '../../cache/LocalCacheMessage'
+import { LocalCacheThreadSchema } from '../../cache/LocalCacheThread'
 
 export const DownstreamWsMessageSchema = z.discriminatedUnion('action', [
 	z.object({
@@ -27,6 +29,12 @@ export const DownstreamWsMessageSchema = z.discriminatedUnion('action', [
 		messageId: z.uuidv7(),
 		content: z.string(),
 		position: z.number()
+	}),
+	z.object({
+		action: z.literal(DownstreamWsMessageAction.ThreadsAndPossiblyMessages),
+		responseTo: z.uuidv4(),
+		threads: z.array(LocalCacheThreadSchema.omit({ completeMemoryHistoricalPicture: true })),
+		requestedMessages: z.array(LocalCacheMessageSchema).optional()
 	})
 ])
 export type DownstreamWsMessage = z.infer<typeof DownstreamWsMessageSchema>
