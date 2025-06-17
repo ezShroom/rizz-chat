@@ -13,6 +13,7 @@ import {
 import { createGroq } from '@ai-sdk/groq'
 import { streamText, type CoreMessage, type StreamTextResult, type ToolSet } from 'ai'
 import { uuidv7 } from 'uuidv7'
+import { gt } from 'semver'
 
 export class UserStateDO extends DurableObject<Env> {
 	private ongoingMessages: Record<
@@ -60,13 +61,29 @@ export class UserStateDO extends DurableObject<Env> {
 			return
 		}
 		switch (decoded.action) {
+			// Sync component
+			// TODO: Sync component messages soon!
+
+			// Pre-DB / unrelated messages
 			case UpstreamWsMessageAction.Hello:
-				ws.send(
-					SuperJSON.stringify({
-						action: DownstreamWsMessageAction.NoChangesToReport
-					} as DownstreamWsMessage)
-				)
+				// Here we only check if the client is outdated and suggest or require a refresh
+				if (gt(globalConfig.version.requireReloadBefore, decoded.version))
+					return ws.send(
+						SuperJSON.stringify({
+							action: DownstreamWsMessageAction.RequireRefresh
+						} satisfies DownstreamWsMessage)
+					)
+				if (gt(globalConfig.version.suggestReloadBefore, decoded.version))
+					ws.send(
+						SuperJSON.stringify({
+							action: DownstreamWsMessageAction.SuggestRefresh
+						} satisfies DownstreamWsMessage)
+					)
 				return
+			case UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages: {
+				// TODO: Use some memory
+				return
+			}
 			case UpstreamWsMessageAction.Submit: {
 				const modelDetails = globalConfig.models[decoded.message.modelConfig.model]
 				if (
@@ -119,10 +136,6 @@ export class UserStateDO extends DurableObject<Env> {
 						this.processTextStream(result.fullStream, messageId)
 					}
 				}
-				return
-			}
-			case UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages: {
-				console.log(decoded)
 				return
 			}
 			default:

@@ -6,6 +6,9 @@ export const DownstreamWsMessageSchema = z.discriminatedUnion('action', [
 		action: z.literal(DownstreamWsMessageAction.RequireRefresh)
 	}),
 	z.object({
+		action: z.literal(DownstreamWsMessageAction.SuggestRefresh)
+	}),
+	z.object({
 		action: z.literal(DownstreamWsMessageAction.NoChangesToReport)
 	}),
 	z.object({

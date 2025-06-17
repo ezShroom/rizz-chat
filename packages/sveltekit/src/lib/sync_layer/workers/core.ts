@@ -264,16 +264,19 @@ export class SyncLayer {
 	}
 
 	private migrated = false
-	private async migrateIfNeeded() {
+	private async migrateIfNeeded(db: SqliteRemoteDatabase<typeof localSchema>) {
+		if (this.migrated) return console.log('Skipping migration because it was already done')
+		console.log('Awaiting migration...')
 		await navigator.locks.request('migration', async () => {
-			if (this.migrated || !this.db) return
-			await migrate(this.db, localMigrations)
+			if (this.migrated) return console.log('Stopped migration because another ended before ours')
+			await migrate(db, localMigrations)
 			this.migrated = true
 		})
+		console.log('Done!')
 	}
 	private async init() {
-		navigator.locks.request('worker_comms', async () => {
-			if (this.db) await this.migrateIfNeeded()
+		navigator.locks.request('leader', async () => {
+			if (this.db) await this.migrateIfNeeded(this.db)
 			this.superiority = Superiority.Leader
 			this.crossWorkerChannel.postMessage({
 				for: Superiority.Follower,
@@ -297,7 +300,7 @@ export class SyncLayer {
 		}
 		getOPFSDatabase()
 			.then(async (db) => {
-				if (this.superiority === Superiority.Leader) await this.migrateIfNeeded()
+				if (this.superiority === Superiority.Leader) await this.migrateIfNeeded(db.drizzle)
 				this.db = db.drizzle
 				if (this.superiority === Superiority.Leader) this.processMessagesAwaitingResources()
 			})
