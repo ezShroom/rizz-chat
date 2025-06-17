@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import { DownstreamAnySyncMessageAction } from './DownstreamAnySyncMessageAction'
-import { LocalCacheThreadSchema,LocalCacheMessageSchema } from 'shared'
+import { LocalCacheThreadSchema, LocalCacheMessageSchema } from 'shared'
 
 export const DownstreamBridgeMessageSchema = z.discriminatedUnion('action', [
 	z.object({
@@ -11,8 +11,8 @@ export const DownstreamBridgeMessageSchema = z.discriminatedUnion('action', [
 	}),
 	z.object({
 		action: z.literal(DownstreamAnySyncMessageAction.InitialData),
-		responseTo: z.uuidv4(),
-		threads: z.array(LocalCacheThreadSchema),
+		threads: z.array(LocalCacheThreadSchema.omit({ completeMemoryHistoricalPicture: true })),
+		id: z.uuidv4(),
 		requestedThreadMessages: z.array(LocalCacheMessageSchema).optional()
 	}),
 	z.object({

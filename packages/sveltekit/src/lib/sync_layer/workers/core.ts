@@ -26,6 +26,7 @@ import type { ConnectionStatusSummary } from '$lib/types/worker_connections/Conn
 import { WsStatus } from '$lib/types/worker_connections/WsStatus'
 import { DbStatus } from '$lib/types/worker_connections/DbStatus'
 import { eq, sql } from 'drizzle-orm'
+import type { DownstreamSyncLayerMessage } from '$lib/types/sync_comms/downstream/DownstreamSyncLayerMessage'
 
 const WS_URL = 'ws://localhost:8787/session'
 
@@ -37,6 +38,21 @@ export class SyncLayer {
 	private sendToMainThread: (message: DownstreamBridgeMessage) => unknown
 	private distributeWidelyAsLeader(message: DownstreamBridgeMessage) {
 		this.sendToMainThread(message)
+		this.postMessage({
+			for: Superiority.Follower,
+			message
+		})
+	}
+	private messageRespond(message: DownstreamSyncLayerMessage) {
+		this.messageQueue.delete(message.id)
+		this.messageAwaitingResourcesQueue.delete(message.id)
+		if (this.personalIds.includes(message.id)) {
+			console.log('Resolved my message!')
+			const index = this.personalIds.indexOf(message.id)
+			if (index !== -1) this.personalIds.splice(index, 1)
+			return this.sendToMainThread(message)
+		}
+		console.log("Resolving another worker's message")
 		this.postMessage({
 			for: Superiority.Follower,
 			message
@@ -113,6 +129,17 @@ export class SyncLayer {
 					// this requires some context knowledge, don't push to memory right now
 					console.log('token')
 					return
+				case DownstreamWsMessageAction.ThreadsAndPossiblyMessages:
+					// Check if there is anything in the message queue for this
+					if (!this.messageQueue.has(decoded.responseTo)) return
+					console.log('We can process this!')
+					this.messageRespond({
+						action: DownstreamAnySyncMessageAction.InitialData,
+						id: decoded.responseTo,
+						threads: decoded.threads,
+						requestedThreadMessages: decoded.requestedMessages
+					})
+					return
 				default:
 					console.log('Message did not match a handling case:', decoded)
 			}
@@ -178,6 +205,8 @@ export class SyncLayer {
 		}
 	}
 
+	private personalIds: string[] = []
+
 	// Some notes on messages:
 	// - Messages can be sent by any tab (especially if we are a SharedWorker, which it isn't our job to know)
 	//   so they must be responded to everywhere
@@ -191,7 +220,8 @@ export class SyncLayer {
 	//   - Connected
 	//   If we have no resources (no DB or WS) and we need resources, we send to messageAwaitingResourcesQueue.
 	//   As soon as resources are available, all messages in messageAwaitingResourcesQueue will be submitted again.
-	public async messageIn(message: UpstreamSyncLayerMessage) {
+	public async messageIn(message: UpstreamSyncLayerMessage, addToPersonalIds: boolean) {
+		if (addToPersonalIds) this.personalIds.push(message.id)
 		console.log('messageIn')
 		if (this.superiority === Superiority.Follower) {
 			console.debug('Forwarded message because this worker has no lock:', message)
@@ -233,13 +263,13 @@ export class SyncLayer {
 										search: item.search
 									}
 								}))
-								this.memoryDataModel.messages.set(message.includeMessagesFrom ?? '', messages)
+								// this.memoryDataModel.messages.set(message.includeMessagesFrom ?? '', messages)
 								return messages
 							})())
 					}
-					this.distributeWidelyAsLeader({
+					this.messageRespond({
 						action: DownstreamAnySyncMessageAction.InitialData,
-						responseTo: message.id,
+						id: message.id,
 						threads: this.memoryDataModel.threads,
 						requestedThreadMessages
 					})
@@ -260,7 +290,9 @@ export class SyncLayer {
 		}
 	}
 	private processMessagesAwaitingResources() {
-		this.messageAwaitingResourcesQueue.forEach(this.messageIn.bind(this))
+		this.messageAwaitingResourcesQueue.forEach((messageAwaitingResources) =>
+			this.messageIn(messageAwaitingResources, false)
+		)
 	}
 
 	private migrated = false
@@ -282,7 +314,7 @@ export class SyncLayer {
 				for: Superiority.Follower,
 				message: { action: DownstreamAnySyncMessageAction.NewLeaderSoPleaseSprayQueuedMessages }
 			} satisfies DiscriminatedSyncLayerMessage)
-			this.messageQueue.forEach(this.messageIn.bind(this))
+			this.messageQueue.forEach((queuedMessage) => this.messageIn(queuedMessage, false))
 			// Do not clear the message queue - we need it to figure out whether to respond within this worker!
 			await new Promise(() => {}) // Keep this lock until the worker dies
 		})
@@ -323,7 +355,12 @@ export class SyncLayer {
 			if (receivedMessage.for !== this.superiority) return
 			if (receivedMessage.for === Superiority.Follower) {
 				const { message } = receivedMessage
-				if ('responseTo' in message) this.messageQueue.delete(message.responseTo)
+				if ('id' in message) {
+					if (!this.personalIds.includes(message.id)) return
+					const index = this.personalIds.indexOf(message.id)
+					if (index !== -1) this.personalIds.splice(index, 1)
+					this.messageQueue.delete(message.id)
+				}
 				if (
 					message.action === DownstreamAnySyncMessageAction.NewLeaderSoPleaseSprayQueuedMessages
 				) {
@@ -335,7 +372,7 @@ export class SyncLayer {
 				this.sendToMainThread(message)
 				return
 			}
-			this.messageIn(receivedMessage.message)
+			this.messageIn(receivedMessage.message, false)
 		}
 		this.sendToMainThread = listener
 		this.ws = new WebSocket(WS_URL)
