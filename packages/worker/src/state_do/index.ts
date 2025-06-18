@@ -64,7 +64,9 @@ export class UserStateDO extends DurableObject<Env> {
 			if (typeof message !== 'string') throw new Error('Socket message is not a string')
 			const potentialUpstream = SuperJSON.parse(message)
 			if (!isUpstreamWsMessage(potentialUpstream))
-				throw new Error('Socket message does not conform to schema')
+				throw new Error(
+					'Socket message does not conform to schema: ' + JSON.stringify(potentialUpstream)
+				)
 			decoded = potentialUpstream
 		} catch (e) {
 			console.error(e)
@@ -193,6 +195,13 @@ export class UserStateDO extends DurableObject<Env> {
 
 				// 'diffs' is a bit of a misleading term but we'll stick with it
 				// basically this is just a request for all the threads
+				const allTheThreads = await this.db.select().from(frontlineSchema.thread).execute()
+				ws.send(
+					SuperJSON.stringify({
+						action: DownstreamWsMessageAction.SyncThreadDiffs,
+						threadDiffs: allTheThreads
+					} satisfies DownstreamWsMessage)
+				)
 				return
 			}
 			default:

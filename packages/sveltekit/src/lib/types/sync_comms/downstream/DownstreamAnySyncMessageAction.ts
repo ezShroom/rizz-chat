@@ -2,5 +2,7 @@ export enum DownstreamAnySyncMessageAction {
 	LocalDatabaseError,
 	InitialData,
 	ReloadImmediately,
-	NewLeaderSoPleaseSprayQueuedMessages
+	NewLeaderSoPleaseSprayQueuedMessages,
+	NetworkIssueBootedSyncLayer,
+	ThreadsMutation
 }

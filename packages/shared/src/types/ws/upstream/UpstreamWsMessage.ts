@@ -15,7 +15,7 @@ export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 	}),
 	z.object({
 		action: z.literal(UpstreamWsMessageAction.SyncClaimSuperiority),
-		latestKnownMessage: z.date()
+		latestKnownMessage: z.date().optional()
 	}),
 	z.object({
 		action: z.literal(UpstreamWsMessageAction.SyncGetThreadDiffs),

@@ -52,8 +52,7 @@
 		"tailwind-scrollbar": "^4.0.2",
 		"uuidv7": "^1.0.2",
 		"wa-sqlite": "github:rhashimoto/wa-sqlite",
-		"zod": "^3.25.63",
-		"shared": "workspace:*"
+		"zod": "^3.25.63"
 	},
 	"packageManager": "bun@1.2.15"
 }

@@ -73,12 +73,12 @@ export class SyncLayer {
 	private missedPings = 0
 	private memoryDataModel: {
 		synced: boolean
-		threads: LocalCacheThread[]
+		threads: Map<string, LocalCacheThread>
 		messages: Map<string, LocalCacheMessage[]>
 		[key: string]: unknown
 	} = {
 		synced: false,
-		threads: [],
+		threads: new Map(),
 		messages: new Map(),
 		attachments: [],
 		settings: {},
@@ -153,6 +153,17 @@ export class SyncLayer {
 						requestedThreadMessages: decoded.requestedMessages
 					})
 					return
+				case DownstreamWsMessageAction.SyncThreadDiffs: {
+					this.memoryDataModel.threads.clear()
+					decoded.threadDiffs.forEach((thread) =>
+						this.memoryDataModel.threads.set(thread.id, thread)
+					)
+					this.distributeWidelyAsLeader({
+						action: DownstreamAnySyncMessageAction.ThreadsMutation,
+						threads: decoded.threadDiffs
+					})
+					return
+				}
 				default:
 					console.log('Message did not match a handling case:', decoded)
 			}
@@ -214,6 +225,10 @@ export class SyncLayer {
 					return
 				default:
 					// Give this socket another go!
+					this.syncEngineStarted = false // the sync engine stops, effectively
+					this.distributeWidelyAsLeader({
+						action: DownstreamAnySyncMessageAction.NetworkIssueBootedSyncLayer
+					})
 					this.establishWs()
 			}
 		}
@@ -266,14 +281,19 @@ export class SyncLayer {
 				const connectionStatus = this.connectionStatusSummary()
 				console.debug(connectionStatus)
 				// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
-				if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
+				if (
+					connectionStatus.db === DbStatus.Connected &&
+					this.memoryDataModel.threads.keys().some(() => true)
+				) {
 					console.debug('Using database to respond')
 
 					// Since we have threads in memory, check if one of them match the initial page focus
 					let requestedThreadMessages: LocalCacheMessage[] | undefined
 					if (
 						message.includeMessagesFrom &&
-						this.memoryDataModel.threads.some((thread) => thread.id === message.includeMessagesFrom)
+						this.memoryDataModel.threads
+							.values()
+							.some((thread) => thread.id === message.includeMessagesFrom)
 					) {
 						// Try to set requestedThreadMessages
 						requestedThreadMessages =
@@ -304,7 +324,7 @@ export class SyncLayer {
 					this.messageRespond({
 						action: DownstreamAnySyncMessageAction.InitialData,
 						id: message.id,
-						threads: this.memoryDataModel.threads,
+						threads: Array.from(this.memoryDataModel.threads.values()),
 						requestedThreadMessages
 					})
 					return

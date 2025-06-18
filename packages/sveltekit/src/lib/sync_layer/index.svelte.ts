@@ -9,7 +9,7 @@ import type { LocalCacheThread } from 'shared'
 export type AppState = {
 	threads: {
 		syncing: boolean
-		list: Omit<LocalCacheThread, 'completeMemoryHistoricalPicture'>[]
+		list: LocalCacheThread[]
 	}
 	selectedThread: string | undefined
 }
@@ -59,6 +59,14 @@ class AppThreadSyncLayer {
 							(a, b) => a.lastModified.getTime() - b.lastModified.getTime()
 						)
 					}
+					return
+				}
+				case DownstreamAnySyncMessageAction.NetworkIssueBootedSyncLayer: {
+					this.data.threads.syncing = true
+					return
+				}
+				case DownstreamAnySyncMessageAction.ThreadsMutation: {
+					this.data.threads.list = message.threads
 					return
 				}
 			}
