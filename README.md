@@ -1,11 +1,5 @@
 # rizz chat
 
-arguably a better ai chat app than t3 chat, so that needs to go open source now (it was a promise)
+Work is continuing on https://chat.rizz.zone/ but this repo is permanently incomplete.
 
-## features
-
-rizz chat has all the features
-
-## use
-
-try rapidly at https://clone.rizz.zone
+Attempt at the [T3 Chat Cloneathon](https://cloneathon.t3.chat/).
