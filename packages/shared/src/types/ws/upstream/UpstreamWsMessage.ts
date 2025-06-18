@@ -13,7 +13,14 @@ export const UpstreamWsMessageSchema = z.discriminatedUnion('action', [
 		message: SomeTransferableMessageSchema,
 		respondTo: z.uuidv4()
 	}),
-	z.object({ action: z.literal(UpstreamWsMessageAction.ClaimSuperiority) }),
+	z.object({
+		action: z.literal(UpstreamWsMessageAction.SyncClaimSuperiority),
+		latestKnownMessage: z.date()
+	}),
+	z.object({
+		action: z.literal(UpstreamWsMessageAction.SyncGetThreadDiffs),
+		latestKnownMessage: z.date()
+	}),
 	z.object({
 		action: z.literal(UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages),
 		messagesFromThread: z.uuid().optional(),

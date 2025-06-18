@@ -14,7 +14,7 @@ export type AppState = {
 	selectedThread: string | undefined
 }
 
-class SyncLayer {
+class AppThreadSyncLayer {
 	public data: AppState = $state({
 		threads: {
 			syncing: true,
@@ -42,11 +42,25 @@ class SyncLayer {
 			switch (message.action) {
 				case DownstreamAnySyncMessageAction.ReloadImmediately:
 					return window.location.reload()
-				case DownstreamAnySyncMessageAction.InitialData:
-					this.data.threads.list = message.threads.sort(
-						(a, b) => a.lastModified.getTime() - b.lastModified.getTime()
+				case DownstreamAnySyncMessageAction.InitialData: {
+					// 1. create a high-performance lookup set of existing thread ids.
+					// this is O(n) where n is the number of existing threads.
+					const existingThreadIds = new Set(this.data.threads.list.map((thread) => thread.id))
+
+					// 2. filter the new threads, keeping only the ones that are not already in our set.
+					// this is O(m) where m is the number of new threads.
+					const newThreads = message.threads.filter(
+						(newThread) => !existingThreadIds.has(newThread.id)
 					)
-					this.data.threads.syncing = false // TODO: This is inaccurate, as InitialData has nothing to do with the sync layer
+
+					// 3. if there are any new threads, concatenate them and re-sort.
+					if (newThreads.length > 0) {
+						this.data.threads.list = [...this.data.threads.list, ...newThreads].sort(
+							(a, b) => a.lastModified.getTime() - b.lastModified.getTime()
+						)
+					}
+					return
+				}
 			}
 		}
 		worker.onerror = (event) => console.log(event)
@@ -64,4 +78,4 @@ class SyncLayer {
 		} satisfies UpstreamBridgeMessage)
 	}
 }
-export const syncLayer = new SyncLayer()
+export const syncLayer = new AppThreadSyncLayer()

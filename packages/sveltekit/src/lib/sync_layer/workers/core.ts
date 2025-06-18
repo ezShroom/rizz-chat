@@ -347,6 +347,7 @@ export class SyncLayer {
 		navigator.locks.request('leader', async () => {
 			if (this.db) await this.migrateIfNeeded(this.db)
 			this.superiority = Superiority.Leader
+			await this.considerStartingSyncEngine()
 			this.crossWorkerChannel.postMessage({
 				for: Superiority.Follower,
 				message: { action: DownstreamAnySyncMessageAction.NewLeaderSoPleaseSprayQueuedMessages }
@@ -371,6 +372,7 @@ export class SyncLayer {
 			.then(async (db) => {
 				if (this.superiority === Superiority.Leader) await this.migrateIfNeeded(db.drizzle)
 				this.db = db.drizzle
+				await this.considerStartingSyncEngine()
 				if (this.superiority === Superiority.Leader) this.processMessagesAwaitingResources()
 			})
 			.catch((e) => {
@@ -378,7 +380,30 @@ export class SyncLayer {
 				console.error('We are falling back to WS only')
 				this.sendToMainThread({ action: DownstreamAnySyncMessageAction.LocalDatabaseError })
 				this.wsOnly = true
+				this.considerStartingSyncEngine()
 			})
+	}
+
+	private syncEngineStarted = false
+	private syncEngineInstance = -1
+	private async considerStartingSyncEngine() {
+		if (this.superiority !== Superiority.Leader) return
+		const connectionSummary = this.connectionStatusSummary()
+		// We do !== DbStatus.PotentiallyConnecting instead of === DbStatus.Connected
+		// because if the database can never start, we still want to sync state down
+		if (
+			connectionSummary.db !== DbStatus.PotentiallyConnecting &&
+			connectionSummary.ws === WsStatus.Connected &&
+			!this.syncEngineStarted
+		) {
+			this.syncEngineInstance++
+			this.ws.send(
+				SuperJSON.stringify({
+					action: UpstreamWsMessageAction.SyncClaimSuperiority
+				} as UpstreamWsMessage)
+			)
+			this.syncEngineStarted = true
+		}
 	}
 
 	constructor(listener: (message: DownstreamBridgeMessage) => unknown) {

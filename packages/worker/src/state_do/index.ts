@@ -47,7 +47,7 @@ export class UserStateDO extends DurableObject<Env> {
 		if (!client || !server)
 			return new Response('Could not generate WebSocket pair', { status: 500 })
 
-		this.ctx.acceptWebSocket(server)
+		this.ctx.acceptWebSocket(server, [crypto.randomUUID()]) // Tag in case this client starts leading
 
 		return new Response(null, {
 			status: 101,
@@ -177,6 +177,22 @@ export class UserStateDO extends DurableObject<Env> {
 						this.processTextStream(result.fullStream, messageId)
 					}
 				}
+				return
+			}
+			case UpstreamWsMessageAction.SyncClaimSuperiority:
+			case UpstreamWsMessageAction.SyncGetThreadDiffs: {
+				const clientId = this.ctx.getTags(ws)[0]
+				if (!clientId) return // should be impossible
+				if (decoded.action === UpstreamWsMessageAction.SyncClaimSuperiority) {
+					await this.db
+						.insert(frontlineSchema.leaders)
+						.values({ id: clientId })
+						.onConflictDoNothing()
+						.execute()
+				}
+
+				// 'diffs' is a bit of a misleading term but we'll stick with it
+				// basically this is just a request for all the threads
 				return
 			}
 			default:

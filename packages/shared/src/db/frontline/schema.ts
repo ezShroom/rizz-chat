@@ -45,6 +45,11 @@ export const attachment = sqliteTable('attachment', {
 	url: text().notNull()
 })
 
+// Side-specific tables. This is NOT how it should be done! But the deadline is approaching.
+export const leaders = sqliteTable('leaders', {
+	id: text().primaryKey()
+})
+
 export const threadRelations = relations(thread, ({ many }) => ({
 	messages: many(message)
 }))
