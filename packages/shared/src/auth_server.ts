@@ -1,4 +1,4 @@
-import { betterAuth, type BetterAuthOptions } from 'better-auth'
+import { betterAuth } from 'better-auth'
 import { passkey } from 'better-auth/plugins/passkey'
 import { drizzleAdapter, type DB } from 'better-auth/adapters/drizzle'
 
@@ -22,8 +22,8 @@ export const getAuthServer = (
 		OTHER_TRUSTED_ORIGINS: string
 	},
 	dev: boolean
-) => {
-	const config: BetterAuthOptions = {
+) =>
+	betterAuth({
 		database: drizzleAdapter(db, {
 			provider: 'sqlite'
 		}),
@@ -65,7 +65,4 @@ export const getAuthServer = (
 			},
 			cookiePrefix: 'rizz-chat'
 		}
-	}
-	console.log(config)
-	return betterAuth(config)
-}
+	})
