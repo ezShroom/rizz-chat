@@ -67,5 +67,5 @@ export const getAuthServer = (
 		}
 	}
 	console.log(config)
-	betterAuth(config)
+	return betterAuth(config)
 }
