@@ -1,4 +1,7 @@
 export enum UpstreamWsMessageAction {
 	Hello,
-	Submit
+	Submit,
+	SyncClaimSuperiority,
+	GiveThreadsAndPossiblyMessages,
+	SyncGetThreadDiffs
 }

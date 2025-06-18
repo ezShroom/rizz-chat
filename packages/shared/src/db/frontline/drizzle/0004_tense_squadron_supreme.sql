@@ -1,0 +1,1 @@
+ALTER TABLE `message` ADD `sender` integer NOT NULL;

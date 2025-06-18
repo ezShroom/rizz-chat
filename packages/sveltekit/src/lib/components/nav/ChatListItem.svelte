@@ -12,7 +12,7 @@
 
 <button
 	class={clsx(
-		'flex w-full cursor-pointer justify-center gap-2 rounded-xl border p-2 text-left transition-all hover:scale-95 hover:bg-stone-900',
+		'flex h-[42px] w-full cursor-pointer justify-center gap-2 rounded-xl border p-2 text-left transition-all hover:scale-95 hover:bg-stone-900',
 		selected && 'border-stone-800 bg-stone-950',
 		!selected && 'border-transparent'
 	)}

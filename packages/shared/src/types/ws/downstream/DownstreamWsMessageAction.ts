@@ -2,5 +2,8 @@ export enum DownstreamWsMessageAction {
 	RequireRefresh,
 	NoChangesToReport,
 	MessageSent,
-	NewMessageToken
+	NewMessageToken,
+	SuggestRefresh,
+	ThreadsAndPossiblyMessages,
+	SyncThreadDiffs
 }

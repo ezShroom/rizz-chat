@@ -2,17 +2,26 @@
 	"name": "shared",
 	"type": "module",
 	"private": true,
+	"version": "0.0.1",
 	"devDependencies": {
 		"@types/bun": "latest"
 	},
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"dependencies": {
+		"better-auth": "^1.2.9",
+		"semver": "^7.7.2",
+		"zod": "^3.25.63",
+		"@libsql/client": "^0.14.0",
+		"drizzle-orm": "^0.44.2",
+		"drizzle-zod": "^0.8.2"
+	},
+	"module": "./src/index.ts",
+	"types": "./src/index.ts",
 	"scripts": {
-		"build": "tsc",
+		"legacy_build": "tsdown --sourcemap",
 		"lint": "eslint .",
 		"style": "prettier -c .",
 		"check": "tsc --noEmit",
-		"dev": "tsc -b --watch --preserveWatchOutput",
+		"legacy_dev": "tsdown --watch --no-clean --sourcemap",
 		"fix_style": "prettier -w ."
 	},
 	"peerDependencies": {

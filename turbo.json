@@ -7,6 +7,8 @@
 		"BETTER_AUTH_URL",
 		"COOKIE_DOMAIN",
 		"DISCORD_CLIENT_SECRET",
+		"OTHER_TRUSTED_ORIGINS",
+		"PUBLIC_SESSION_SERVER_ORIGIN",
 		"PUBLIC_DISCORD_APP_ID"
 	],
 	"globalPassThroughEnv": [
@@ -17,6 +19,8 @@
 		"COOKIE_DOMAIN",
 		"DISCORD_CLIENT_SECRET",
 		"PUBLIC_DISCORD_APP_ID",
+		"OTHER_TRUSTED_ORIGINS",
+		"PUBLIC_SESSION_SERVER_ORIGIN",
 		"GROQ_KEY"
 	],
 	"tasks": {
@@ -25,7 +29,7 @@
 			"outputs": ["dist/**", ".svelte-kit/**", ".wrangler/**"]
 		},
 		"check": {
-			"dependsOn": ["shared#build", "^check"]
+			"dependsOn": ["^check"]
 		},
 		"style": {
 			"dependsOn": ["^style"]
@@ -33,9 +37,11 @@
 		"fix_style": {},
 		"types": {},
 		"lint": {
-			"dependsOn": ["shared#build", "^lint"]
+			"dependsOn": ["^lint"]
 		},
 		"db": { "persistent": true, "cache": false },
-		"dev": { "dependsOn": ["shared#build"], "persistent": true, "cache": false }
+		"dev": { "persistent": true, "cache": false },
+		"preview": { "dependsOn": ["sveltekit#build"], "persistent": true, "cache": false },
+		"deploy": { "dependsOn": ["build", "^deploy"] }
 	}
 }

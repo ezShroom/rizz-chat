@@ -1,9 +1,16 @@
 import { z } from 'zod/v4'
 import { DownstreamWsMessageAction } from './DownstreamWsMessageAction'
+import { LocalCacheMessageSchema } from '../../cache/LocalCacheMessage'
+import { LocalCacheThreadSchema } from '../../cache/LocalCacheThread'
+import { createSelectSchema } from 'drizzle-zod'
+import { frontlineSchema } from '../../..'
 
 export const DownstreamWsMessageSchema = z.discriminatedUnion('action', [
 	z.object({
 		action: z.literal(DownstreamWsMessageAction.RequireRefresh)
+	}),
+	z.object({
+		action: z.literal(DownstreamWsMessageAction.SuggestRefresh)
 	}),
 	z.object({
 		action: z.literal(DownstreamWsMessageAction.NoChangesToReport)
@@ -24,6 +31,16 @@ export const DownstreamWsMessageSchema = z.discriminatedUnion('action', [
 		messageId: z.uuidv7(),
 		content: z.string(),
 		position: z.number()
+	}),
+	z.object({
+		action: z.literal(DownstreamWsMessageAction.ThreadsAndPossiblyMessages),
+		responseTo: z.uuidv4(),
+		threads: z.array(LocalCacheThreadSchema),
+		requestedMessages: z.array(LocalCacheMessageSchema).optional()
+	}),
+	z.object({
+		action: z.literal(DownstreamWsMessageAction.SyncThreadDiffs),
+		threadDiffs: z.array(createSelectSchema(frontlineSchema.thread))
 	})
 ])
 export type DownstreamWsMessage = z.infer<typeof DownstreamWsMessageSchema>

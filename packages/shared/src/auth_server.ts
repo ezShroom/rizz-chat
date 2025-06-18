@@ -9,13 +9,17 @@ export const getAuthServer = (
 		DISCORD_CLIENT_SECRET,
 		BETTER_AUTH_SECRET,
 		BETTER_AUTH_URL,
-		COOKIE_DOMAIN
+		COOKIE_DOMAIN,
+		PUBLIC_SESSION_SERVER_ORIGIN,
+		OTHER_TRUSTED_ORIGINS
 	}: {
 		PUBLIC_DISCORD_APP_ID: string
 		DISCORD_CLIENT_SECRET: string
 		BETTER_AUTH_SECRET: string
 		BETTER_AUTH_URL: string
 		COOKIE_DOMAIN: string
+		PUBLIC_SESSION_SERVER_ORIGIN: string
+		OTHER_TRUSTED_ORIGINS: string
 	},
 	dev: boolean
 ) =>
@@ -36,6 +40,19 @@ export const getAuthServer = (
 		],
 		secret: BETTER_AUTH_SECRET,
 		baseURL: BETTER_AUTH_URL,
+		trustedOrigins: [
+			PUBLIC_SESSION_SERVER_ORIGIN,
+			...(() => {
+				try {
+					return (JSON.parse(OTHER_TRUSTED_ORIGINS) as string[]).map(
+						(trustedOrigin) => `http${dev ? '' : 's'}://${trustedOrigin}`
+					)
+				} catch (error) {
+					console.error('Failed to parse other trusted origins:', error)
+					return []
+				}
+			})()
+		],
 		advanced: {
 			crossSubDomainCookies: {
 				enabled: true,
@@ -45,6 +62,7 @@ export const getAuthServer = (
 				secure: !dev,
 				httpOnly: true,
 				sameSite: 'lax' // Allows CORS-based cookie sharing across subdomains
-			}
+			},
+			cookiePrefix: 'rizz-chat'
 		}
 	})

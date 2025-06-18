@@ -5,9 +5,10 @@ import {
 	BETTER_AUTH_SECRET,
 	BETTER_AUTH_URL,
 	COOKIE_DOMAIN,
-	DISCORD_CLIENT_SECRET
+	DISCORD_CLIENT_SECRET,
+	OTHER_TRUSTED_ORIGINS
 } from '$env/static/private'
-import { PUBLIC_DISCORD_APP_ID } from '$env/static/public'
+import { PUBLIC_DISCORD_APP_ID, PUBLIC_SESSION_SERVER_ORIGIN } from '$env/static/public'
 import { getAuthServer, getDB } from 'shared'
 
 export const auth = getAuthServer(
@@ -17,7 +18,9 @@ export const auth = getAuthServer(
 		BETTER_AUTH_URL,
 		COOKIE_DOMAIN,
 		DISCORD_CLIENT_SECRET,
-		PUBLIC_DISCORD_APP_ID
+		PUBLIC_DISCORD_APP_ID,
+		PUBLIC_SESSION_SERVER_ORIGIN,
+		OTHER_TRUSTED_ORIGINS
 	},
 	dev
 )

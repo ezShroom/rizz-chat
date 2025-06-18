@@ -10,12 +10,14 @@
 		"check": "tsc",
 		"lint": "eslint .",
 		"style": "prettier -c .",
-		"fix_style": "prettier -w ."
+		"fix_style": "prettier -w .",
+		"deploy": "wrangler deploy"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
 	},
 	"dependencies": {
-		"shared": "workspace:*"
+		"shared": "workspace:*",
+		"drizzle-orm": "^0.44.2"
 	}
 }

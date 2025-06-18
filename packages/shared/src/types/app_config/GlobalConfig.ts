@@ -3,6 +3,7 @@ import { ModelProviders } from './ModelProviders'
 import { ReasoningLevel } from '../ReasoningLevel'
 import { AILab } from './AILab'
 import { FileCategory } from './FileCategory'
+import validateSemver from 'semver/functions/valid'
 
 export const GlobalConfigSchema = z.object({
 	models: z.record(
@@ -19,7 +20,12 @@ export const GlobalConfigSchema = z.object({
 			description: z.string(),
 			deprecated: z.boolean()
 		})
-	)
+	),
+	version: z.object({
+		current: z.string().refine(validateSemver),
+		suggestReloadBefore: z.string().refine(validateSemver),
+		requireReloadBefore: z.string().refine(validateSemver)
+	})
 })
 export type GlobalConfig = z.infer<typeof GlobalConfigSchema>
 export const isGlobalConfig = (obj: unknown): obj is GlobalConfig =>
