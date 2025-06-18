@@ -58,7 +58,7 @@ class SyncLayer {
 				PUBLIC_SESSION_SERVER_ORIGIN,
 				dev
 			}
-		})
+		} satisfies UpstreamBridgeMessage)
 		worker.postMessage({
 			action: UpstreamAnySyncMessageAction.GiveInitialData
 		} satisfies UpstreamBridgeMessage)
