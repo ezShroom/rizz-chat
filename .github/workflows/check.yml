@@ -3,6 +3,10 @@ run-name: Checking commit by ${{ github.actor }}
 
 on: [push]
 
+permissions:
+  pull-requests: write # grant permission to write to pull requests (i.e., post comments)
+  issues: write # comments are technically an 'issue' resource
+
 jobs:
   Lint:
     runs-on: ubuntu-latest
