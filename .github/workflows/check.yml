@@ -10,6 +10,16 @@ jobs:
     steps:
       - name: Debug OTHER_TRUSTED_ORIGINS
         run: 'echo "Value is: $OTHER_TRUSTED_ORIGINS"'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          BETTER_AUTH_URL: ${{ env.BETTER_AUTH_URL }}
+          COOKIE_DOMAIN: ${{ env.COOKIE_DOMAIN }}
+          PUBLIC_DISCORD_APP_ID: ${{ env.PUBLIC_DISCORD_APP_ID }}
+          PUBLIC_SESSION_SERVER_ORIGIN: ${{ env.PUBLIC_SESSION_SERVER_ORIGIN }}
+          OTHER_TRUSTED_ORIGINS: ${{ env.OTHER_TRUSTED_ORIGINS }}
 
   Lint:
     runs-on: ubuntu-latest
