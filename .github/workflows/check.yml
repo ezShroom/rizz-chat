@@ -4,6 +4,14 @@ run-name: Checking commit by ${{ github.actor }}
 on: [push]
 
 jobs:
+
+  Debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Debug OTHER_TRUSTED_ORIGINS
+        run: echo "Value is: $OTHER_TRUSTED_ORIGINS"
+
   Lint:
     runs-on: ubuntu-latest
 
