@@ -42,9 +42,16 @@ export const getAuthServer = (
 		baseURL: BETTER_AUTH_URL,
 		trustedOrigins: [
 			PUBLIC_SESSION_SERVER_ORIGIN,
-			...(JSON.parse(OTHER_TRUSTED_ORIGINS) as string[]).map(
-				(trustedOrigin) => `http${dev ? '' : 's'}://${trustedOrigin}`
-			)
+			...(() => {
+				try {
+					return (JSON.parse(OTHER_TRUSTED_ORIGINS) as string[]).map(
+						(trustedOrigin) => `http${dev ? '' : 's'}://${trustedOrigin}`
+					);
+				} catch (error) {
+					console.error('Failed to parse OTHER_TRUSTED_ORIGINS:', error);
+					return [];
+				}
+			})()
 		],
 		advanced: {
 			crossSubDomainCookies: {
