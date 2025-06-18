@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Debug OTHER_TRUSTED_ORIGINS
-        run: echo "Value is: $OTHER_TRUSTED_ORIGINS"
+        run: "echo \"Value is: $OTHER_TRUSTED_ORIGINS\"""
 
   Lint:
     runs-on: ubuntu-latest
