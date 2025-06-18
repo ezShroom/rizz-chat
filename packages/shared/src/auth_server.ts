@@ -46,10 +46,10 @@ export const getAuthServer = (
 				try {
 					return (JSON.parse(OTHER_TRUSTED_ORIGINS) as string[]).map(
 						(trustedOrigin) => `http${dev ? '' : 's'}://${trustedOrigin}`
-					);
+					)
 				} catch (error) {
-					console.error('Failed to parse OTHER_TRUSTED_ORIGINS:', error);
-					return [];
+					console.error('Failed to parse other trusted origins:', error)
+					return []
 				}
 			})()
 		],
