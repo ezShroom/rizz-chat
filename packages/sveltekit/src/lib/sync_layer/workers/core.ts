@@ -27,12 +27,16 @@ import { WsStatus } from '$lib/types/worker_connections/WsStatus'
 import { DbStatus } from '$lib/types/worker_connections/DbStatus'
 import { eq, sql } from 'drizzle-orm'
 import type { DownstreamSyncLayerMessage } from '$lib/types/sync_comms/downstream/DownstreamSyncLayerMessage'
-import { PUBLIC_SESSION_SERVER_ORIGIN } from '$env/static/public'
-import { dev } from '$app/environment'
+import type { WorkerEnv } from '$lib/types/sync_comms/WorkerEnv'
 
-const WS_URL = `ws${dev ? '' : 's'}://${PUBLIC_SESSION_SERVER_ORIGIN}/session`
+let env: WorkerEnv
+export function initEnv(envToInit: WorkerEnv) {
+	env = envToInit
+}
 
 export class SyncLayer {
+	private WS_URL = `ws${env.dev ? '' : 's'}://${env.PUBLIC_SESSION_SERVER_ORIGIN}/session`
+
 	private crossWorkerChannel = new BroadcastChannel('workers')
 	private postMessage(message: DiscriminatedSyncLayerMessage) {
 		this.crossWorkerChannel.postMessage(message)
@@ -95,7 +99,7 @@ export class SyncLayer {
 	private async establishWs(initWs: boolean = true) {
 		await this.allowWsConnectionPromise
 		this.allowWsConnectionPromise = new Promise((resolve) => setTimeout(resolve, 500))
-		if (initWs) this.ws = new WebSocket(WS_URL)
+		if (initWs) this.ws = new WebSocket(this.WS_URL)
 		const currentWs = this.ws
 		this.currentWsConnectionNumber++
 		const thisWsConnection = this.currentWsConnectionNumber
@@ -408,7 +412,7 @@ export class SyncLayer {
 			this.messageIn(receivedMessage.message, false)
 		}
 		this.sendToMainThread = listener
-		this.ws = new WebSocket(WS_URL)
+		this.ws = new WebSocket(this.WS_URL)
 		this.establishWs(false) // We've already initialised so on this occasion, no need to do it again
 		this.init()
 	}

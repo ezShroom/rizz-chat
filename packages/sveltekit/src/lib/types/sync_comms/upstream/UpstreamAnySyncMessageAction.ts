@@ -1,3 +1,4 @@
 export enum UpstreamAnySyncMessageAction {
-	GiveInitialData
+	EnsureInit,
+	GiveInitialData,
 }

@@ -1,3 +1,5 @@
+import { dev } from '$app/environment'
+import { PUBLIC_SESSION_SERVER_ORIGIN } from '$env/static/public'
 import { DownstreamAnySyncMessageAction } from '$lib/types/sync_comms/downstream/DownstreamAnySyncMessageAction'
 import type { DownstreamBridgeMessage } from '$lib/types/sync_comms/downstream/DownstreamBridgeMessage'
 import { UpstreamAnySyncMessageAction } from '$lib/types/sync_comms/upstream/UpstreamAnySyncMessageAction'
@@ -41,12 +43,22 @@ class SyncLayer {
 				case DownstreamAnySyncMessageAction.ReloadImmediately:
 					return window.location.reload()
 				case DownstreamAnySyncMessageAction.InitialData:
-					this.data.threads.list = message.threads.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime())
+					this.data.threads.list = message.threads.sort(
+						(a, b) => a.lastModified.getTime() - b.lastModified.getTime()
+					)
 					this.data.threads.syncing = false // TODO: This is inaccurate, as InitialData has nothing to do with the sync layer
 			}
 		}
 		worker.onerror = (event) => console.log(event)
 		worker.onmessageerror = (event) => console.log(event)
+
+		worker.postMessage({
+			action: UpstreamAnySyncMessageAction.EnsureInit,
+			env: {
+				PUBLIC_SESSION_SERVER_ORIGIN,
+				dev
+			}
+		})
 		worker.postMessage({
 			action: UpstreamAnySyncMessageAction.GiveInitialData
 		} satisfies UpstreamBridgeMessage)
