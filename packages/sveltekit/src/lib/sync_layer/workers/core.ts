@@ -160,6 +160,23 @@ export class SyncLayer {
 				} satisfies UpstreamWsMessage)
 			)
 			this.pingInterval = setInterval(() => {
+				if (this.wsNotRelevant(thisWsConnection)) {
+					currentWs.close()
+					console.log('Closed this socket!')
+					return
+				}
+				if (this.missedPings >= 3) {
+					console.log('Missed too many pings, attempting reconnect')
+					currentWs.close()
+
+					// While offline the browser might just Not Care that we closed the connection, so we need to do this call ourselves
+					this.establishWs()
+				}
+				console.log(
+					'Start pingInterval - we have ',
+					this.missedPings,
+					`missed (${this.missedPings >= 3})`
+				)
 				if (this.ws.readyState === this.ws.OPEN && this.pingInterval) this.ws.send('?')
 				this.missedPings++
 				console.debug('Sent ping - missed', this.missedPings)
@@ -172,7 +189,8 @@ export class SyncLayer {
 			// Since we're now an available resource, we need to nudge the local message queue along too
 			this.processMessagesAwaitingResources()
 		}
-		this.ws.onerror = () => {
+		this.ws.onerror = (event) => {
+			console.log(event)
 			if (this.wsNotRelevant(thisWsConnection)) return
 			clearInterval(this.pingInterval)
 			// Just in case, to make sure we're not queueing up loads of sockets we won't use
@@ -180,6 +198,7 @@ export class SyncLayer {
 			this.establishWs()
 		}
 		this.ws.onclose = (event) => {
+			console.log('handing ws close')
 			if (this.wsNotRelevant(thisWsConnection)) return
 			clearInterval(this.pingInterval)
 			switch (event.code) {
