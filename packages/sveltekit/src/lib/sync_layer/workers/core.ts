@@ -44,6 +44,7 @@ export class SyncLayer {
 		})
 	}
 	private messageRespond(message: DownstreamSyncLayerMessage) {
+		console.log('Determining where to respond...')
 		this.messageQueue.delete(message.id)
 		this.messageAwaitingResourcesQueue.delete(message.id)
 		if (this.personalIds.includes(message.id)) {
@@ -112,6 +113,8 @@ export class SyncLayer {
 				return console.error('Error while parsing message!\n', event.data)
 			}
 
+			console.debug('We have socket data:', decoded)
+
 			switch (decoded.action) {
 				case DownstreamWsMessageAction.RequireRefresh:
 					this.sendToMainThread({ action: DownstreamAnySyncMessageAction.ReloadImmediately })
@@ -131,7 +134,11 @@ export class SyncLayer {
 					return
 				case DownstreamWsMessageAction.ThreadsAndPossiblyMessages:
 					// Check if there is anything in the message queue for this
-					if (!this.messageQueue.has(decoded.responseTo)) return
+					if (!this.messageQueue.has(decoded.responseTo)) {
+						console.debug('Our message queue does not have this message, so we are ignoring it.')
+						console.debug(this.messageQueue)
+						return
+					}
 					console.log('We can process this!')
 					this.messageRespond({
 						action: DownstreamAnySyncMessageAction.InitialData,
@@ -222,19 +229,21 @@ export class SyncLayer {
 	//   As soon as resources are available, all messages in messageAwaitingResourcesQueue will be submitted again.
 	public async messageIn(message: UpstreamSyncLayerMessage, addToPersonalIds: boolean) {
 		if (addToPersonalIds) this.personalIds.push(message.id)
-		console.log('messageIn')
+		if (!this.messageQueue.has(message.id)) this.messageQueue.set(message.id, message)
+		console.debug('messageIn')
 		if (this.superiority === Superiority.Follower) {
 			console.debug('Forwarded message because this worker has no lock:', message)
-			this.messageQueue.set(message.id, message)
 			this.postMessage({ for: Superiority.Leader, message })
 			return
 		}
 		switch (message.action) {
 			case UpstreamAnySyncMessageAction.GiveInitialData: {
 				const connectionStatus = this.connectionStatusSummary()
-				console.log(connectionStatus)
+				console.debug(connectionStatus)
 				// Prefer local data. In this case, it cannot be impossible to respond because we can omit messages if we don't have them
 				if (connectionStatus.db === DbStatus.Connected && this.memoryDataModel.threads.length > 0) {
+					console.debug('Using database to respond')
+
 					// Since we have threads in memory, check if one of them match the initial page focus
 					let requestedThreadMessages: LocalCacheMessage[] | undefined
 					if (
@@ -276,6 +285,8 @@ export class SyncLayer {
 					return
 				}
 				if (connectionStatus.ws === WsStatus.Connected) {
+					console.debug('Using socket to respond')
+
 					if (!this.wsQueue.has(message.id))
 						this.sendReliably({
 							action: UpstreamWsMessageAction.GiveThreadsAndPossiblyMessages,
@@ -285,6 +296,7 @@ export class SyncLayer {
 					if (connectionStatus.db === DbStatus.NeverConnecting) return
 				}
 				// No resources (or only ws, in which case the database *might* come alive) allow for this request to succeed - queue it for when it can
+				console.debug(`${message.id} is waiting for resources...`)
 				this.messageAwaitingResourcesQueue.set(message.id, message)
 			}
 		}
