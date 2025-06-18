@@ -417,6 +417,7 @@ export class SyncLayer {
 			!this.syncEngineStarted
 		) {
 			this.syncEngineInstance++
+
 			this.ws.send(
 				SuperJSON.stringify({
 					action: UpstreamWsMessageAction.SyncClaimSuperiority
