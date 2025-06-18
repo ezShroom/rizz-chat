@@ -153,10 +153,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-          COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
-          PUBLIC_DISCORD_APP_ID: ${{ secrets.PUBLIC_DISCORD_APP_ID }}
+          BETTER_AUTH_URL: ${{ env.BETTER_AUTH_URL }}
+          COOKIE_DOMAIN: ${{ env.COOKIE_DOMAIN }}
+          PUBLIC_DISCORD_APP_ID: ${{ env.PUBLIC_DISCORD_APP_ID }}
+          SESSION_SERVER_ORIGIN: ${{ env.SESSION_SERVER_ORIGIN }}
+          OTHER_TRUSTED_ORIGINS: ${{ env.OTHER_TRUSTED_ORIGINS }}
 
       - name: Deploy
         id: deploy

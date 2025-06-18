@@ -27,8 +27,10 @@ import { WsStatus } from '$lib/types/worker_connections/WsStatus'
 import { DbStatus } from '$lib/types/worker_connections/DbStatus'
 import { eq, sql } from 'drizzle-orm'
 import type { DownstreamSyncLayerMessage } from '$lib/types/sync_comms/downstream/DownstreamSyncLayerMessage'
+import { PUBLIC_SESSION_SERVER_ORIGIN } from '$env/static/public'
+import { dev } from '$app/environment'
 
-const WS_URL = 'ws://localhost:8787/session'
+const WS_URL = `ws${dev ? '' : 's'}://${PUBLIC_SESSION_SERVER_ORIGIN}/session`
 
 export class SyncLayer {
 	private crossWorkerChannel = new BroadcastChannel('workers')
